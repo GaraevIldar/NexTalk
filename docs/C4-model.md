@@ -1,7 +1,6 @@
 # NexTalk — C4-модель
 
-> Микросервисная архитектура с Zitadel, Nginx, Kubernetes.
-> YAML для импорта в [IcePanel](https://icepanel.io) + Flows для основных сценариев.
+> YAML для импорта в [IcePanel](https://icepanel.io)
 
 ---
 
@@ -588,7 +587,7 @@ modelConnections:
 3. Nginx: Проверяет rate limit, добавляет X-Request-Id
 4. Nginx → Guild Service: Proxy POST /api/guilds
 5. Guild Service: Валидация JWT (OIDC discovery → Zitadel)
-   Извлекает userId (sub), displayName (name) из claims
+   Извлекает userId (sub), displayName (name), username(preferred_username) из claims
 6. Guild Service → PostgreSQL (guild schema):
    BEGIN
      INSERT INTO guilds (id, name, owner_id)
