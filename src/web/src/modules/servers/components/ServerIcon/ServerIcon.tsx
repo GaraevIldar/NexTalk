@@ -25,7 +25,6 @@ export const ServerIcon: React.FC<ServerIconProps> = ({
                                                           isAdd = false,
                                                           onClick,
                                                       }) => {
-    // Кнопка "Добавить сервер"
     if (isAdd) {
         return (
             <button onClick={onClick} className={`${styles.serverIcon} ${styles.add}`}>
@@ -34,7 +33,6 @@ export const ServerIcon: React.FC<ServerIconProps> = ({
         )
     }
 
-    // Обычная иконка сервера
     const iconName = iconMap[type] || 'server-default'
 
     return (

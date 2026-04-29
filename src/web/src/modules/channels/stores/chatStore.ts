@@ -17,7 +17,6 @@ interface ChatState {
     fetchMessages: (channelId: string) => void
 }
 
-// Мок-сообщения для разных каналов
 const mockMessages: Record<string, Message[]> = {
     '1': [
         { id: 'm1', channelId: '1', authorId: 'u1', authorName: 'Алексей', content: 'Всем привет! Когда стрим?', createdAt: new Date('2026-04-20T14:23:00') },
@@ -46,7 +45,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
     fetchMessages: (channelId: string) => {
         set({ loading: true })
-        // Симуляция загрузки
         setTimeout(() => {
             const existingMessages = get().messages[channelId] || []
             set({

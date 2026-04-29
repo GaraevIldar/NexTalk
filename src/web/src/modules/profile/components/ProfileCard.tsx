@@ -29,23 +29,19 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
                                                         }) => {
     return (
         <div className={styles.card}>
-            {/* Кнопка закрытия (для модалки) */}
             {onClose && (
                 <button onClick={onClose} className={styles.closeBtn}>
                     <Icon name="arrow-left" size={18} />
                 </button>
             )}
 
-            {/* Аватар */}
             <div className={styles.avatar}>
                 {user.avatar || user.username?.charAt(0).toUpperCase()}
             </div>
 
-            {/* Информация */}
             <div className={styles.username}>{user.username}</div>
             <div className={styles.email}>{user.email}</div>
 
-            {/* Детали */}
             <div className={styles.details}>
                 <div className={styles.detailItem}>
                     <span className={styles.detailLabel}>Аккаунт создан</span>
@@ -71,7 +67,6 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
                 </div>
             </div>
 
-            {/* Действия */}
             {showActions && (
                 <div className={styles.actions}>
                     {onEdit && (

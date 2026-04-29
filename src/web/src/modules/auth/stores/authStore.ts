@@ -19,13 +19,11 @@ interface AuthState {
 export const useAuthStore = create<AuthState>()(
     persist(
         (set) => ({
-            // Всегда авторизован с тестовым пользователем
             user: { id: '1', username: 'Алексей', email: 'alexey@example.com' },
             token: 'demo-token',
             isAuthenticated: true,
 
             login: async (email: string, password: string) => {
-                // Мок-логин - всегда успешный
                 const username = email.split('@')[0]
                 set({
                     user: { id: '1', username, email },
@@ -35,7 +33,6 @@ export const useAuthStore = create<AuthState>()(
             },
 
             logout: () => {
-                // Очищаем данные при выходе
                 set({ user: null, token: null, isAuthenticated: false })
             },
 

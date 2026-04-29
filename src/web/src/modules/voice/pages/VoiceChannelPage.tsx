@@ -6,7 +6,7 @@ import { ChannelSidebar } from '../../channels/components/ChannelSidebar'
 import { VoiceControls } from '../components/VoiceControls'
 import { VoiceParticipantList } from '../components/VoiceParticipantList'
 import styles from './VoiceChannelPage.module.scss'
-import {VoiceParticipantProps} from "../../../App.tsx";
+import {VoiceParticipantProps} from "../components/VoiceParticipant.tsx";
 
 const mockParticipants: VoiceParticipantProps[] = [
   { id: '1', name: 'Алексей', avatar: 'А', isSpeaking: true, isMuted: false, isDeafened: false, volume: 75 },

@@ -11,7 +11,6 @@ export const ProfilePage: React.FC = () => {
 
     const handleLogout = () => {
         logout()
-        // После выхода просто обновляем страницу, authStore сам разлогинится
         window.location.href = '/servers'
     }
 

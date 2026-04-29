@@ -4,7 +4,6 @@ import { useServerStore } from '../../../modules/servers/stores/serverStore'
 import styles from './ServerSidebar.module.scss'
 import {ServerIcon} from "../../../modules/servers/components/ServerIcon/ServerIcon.tsx";
 
-// Определяем тип сервера по названию
 const getServerType = (name: string): 'game' | 'dev' | 'music' | 'study' | 'friends' | 'default' => {
     const lowerName = name.toLowerCase()
     if (lowerName.includes('game') || lowerName.includes('night')) return 'game'
