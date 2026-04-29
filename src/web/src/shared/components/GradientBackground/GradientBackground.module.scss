@@ -1,0 +1,29 @@
+@import '../../styles/variables';
+@import '../../styles/mixins';
+
+.container {
+  position: relative;
+  min-height: 100vh;
+  background: $bg-primary;
+  overflow: hidden;
+}
+
+.ball1 {
+  @include gradient-ball(400px, -150px, -150px, linear-gradient(214deg, rgba(181,66,170,0.4) 0%, rgba(157,54,215,0.5) 100%));
+}
+
+.ball2 {
+  @include gradient-ball(350px, auto, auto, linear-gradient(214deg, rgba(66,160,181,0.4) 0%, rgba(54,166,215,0.5) 100%));
+  right: -100px;
+  bottom: -100px;
+  left: auto;
+}
+
+.ball3 {
+  @include gradient-ball(300px, 40%, 40%, linear-gradient(214deg, rgba(116,66,181,0.3) 0%, rgba(54,70,215,0.4) 100%));
+}
+
+.content {
+  position: relative;
+  z-index: 10;
+}

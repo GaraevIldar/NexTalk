@@ -1,0 +1,75 @@
+@import '../../../shared/styles/variables';
+
+.message {
+  display: flex;
+  gap: 12px;
+  padding: 4px 16px;
+
+  &:hover {
+    background: rgba(43, 42, 102, 0.3);
+  }
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  background: $gradient-btn;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.avatarPlaceholder {
+  width: 40px;
+  flex-shrink: 0;
+}
+
+.content {
+  flex: 1;
+  min-width: 0; // для обрезки длинного текста
+}
+
+.header {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+
+.author {
+  font-weight: 700;
+  font-size: 14px;
+
+  &:hover {
+    text-decoration: underline;
+    cursor: pointer;
+  }
+}
+
+.time {
+  color: $text-secondary;
+  font-size: 11px;
+}
+
+.text {
+  color: $text-muted;
+  font-size: 14px;
+  line-height: 1.4;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+}
+
+.own {
+  .avatar {
+    background: $accent-purple;
+  }
+
+  .author {
+    color: $accent-pink;
+  }
+}

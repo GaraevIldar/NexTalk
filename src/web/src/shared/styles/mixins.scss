@@ -1,0 +1,46 @@
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@mixin flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+@mixin gradient-text {
+  background: $gradient-btn;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+@mixin scrollbar {
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: $bg-secondary;
+    border-radius: 10px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: $accent-pink;
+    border-radius: 10px;
+  }
+}
+
+@mixin gradient-ball($size, $left, $top, $colors) {
+  position: absolute;
+  width: $size;
+  height: $size;
+  left: $left;
+  top: $top;
+  background: $colors;
+  border-radius: 50%;
+  filter: blur(100px);
+  pointer-events: none;
+}

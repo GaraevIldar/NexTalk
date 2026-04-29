@@ -1,0 +1,89 @@
+@import '../../../shared/styles/variables';
+
+.sidebar {
+  width: 260px;
+  background: $bg-tertiary;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid $border-color;
+}
+
+.serverHeader {
+  padding: 20px 16px 16px;
+  border-bottom: 1px solid $border-color;
+  margin-bottom: 16px;
+}
+
+.serverTitle {
+  font-size: 18px;
+  font-weight: 700;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.dropdown {
+  font-size: 12px;
+}
+
+.section {
+  padding: 0 16px;
+  margin-bottom: 24px;
+}
+
+.sectionTitle {
+  color: $text-muted;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+  letter-spacing: 0.5px;
+}
+
+.channel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  cursor: pointer;
+  color: $text-muted;
+  font-size: 14px;
+  transition: all 0.2s;
+
+  svg {
+    flex-shrink: 0;
+  }
+
+  &:hover {
+    background: $bg-secondary;
+    color: $text-primary;
+  }
+
+  &.active {
+    background: $bg-secondary;
+    color: $text-primary;
+  }
+}
+
+.addChannel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  cursor: pointer;
+  color: $text-muted;
+  font-size: 14px;
+  margin-top: 4px;
+  transition: all 0.2s;
+
+  svg {
+    flex-shrink: 0;
+  }
+
+  &:hover {
+    background: $bg-secondary;
+    color: $text-primary;
+  }
+}

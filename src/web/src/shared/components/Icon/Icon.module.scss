@@ -1,0 +1,41 @@
+@import '../../styles/variables';
+
+.icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.serverIcon {
+  width: 52px;
+  height: 52px;
+  background: $gradient-card;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  color: $text-primary;
+
+  &:hover {
+    border-radius: 26px;
+  }
+
+  &.active {
+    background: $gradient-btn;
+    border-radius: 26px;
+  }
+
+  &.add {
+    background: transparent;
+    border: 2px dashed $accent-purple;
+    color: $accent-purple;
+
+    &:hover {
+      background: rgba(118, 95, 255, 0.1);
+    }
+  }
+}

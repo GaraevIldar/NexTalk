@@ -1,0 +1,43 @@
+@import '../../styles/variables';
+
+.container {
+  width: 100%;
+}
+
+.label {
+  display: block;
+  color: $text-secondary;
+  font-size: 14px;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.input {
+  width: 100%;
+  background: $gradient-card;
+  border: none;
+  border-radius: 16px;
+  padding: 14px 18px;
+  color: $text-primary;
+  font-size: 16px;
+  transition: all 0.2s ease;
+
+  &::placeholder {
+    color: rgba($text-secondary, 0.5);
+  }
+
+  &:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px $accent-pink;
+  }
+
+  &.error {
+    border: 1px solid $error-color;
+  }
+}
+
+.errorMessage {
+  color: $error-color;
+  font-size: 12px;
+  margin-top: 4px;
+}
