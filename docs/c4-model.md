@@ -4,6 +4,10 @@
 
 ---
 
+**Готовая C4 модель проекта ->** https://s.icepanel.io/r7Jqd2EfeDO3JL/jcOE
+
+---
+
 ## Как импортировать в IcePanel
 
 1. Зарегистрируйтесь на [app.icepanel.io](https://app.icepanel.io).
