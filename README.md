@@ -527,19 +527,19 @@ Polly Circuit Breaker на каждом `HttpClient`:
 
 | ID | Характеристика | Целевой уровень | Как достигается |
 |:--|:--|:--|:--|
-| NFR-1 | Латентность сообщения | p95 < 200ms | SignalR broadcast |
-| NFR-2 | Задержка голоса | < 150ms | LiveKit SFU + TURN |
-| NFR-3 | Доступность | 99% | Health checks, restart, Circuit Breaker |
-| NFR-4 | Безопасность | TLS 1.3 | HTTPS, WSS, DTLS |
-| NFR-5 | Надежность доставки | At-least-once | Outbox Pattern |
-| NFR-6 | Чтение истории | < 200ms | Cursor pagination, индексы |
-| NFR-7 | Масштабируемость | Архитектурная готовность | Микросервисы, stateless |
-| NFR-8 | Наблюдаемость | Full stack | Serilog JSON + Correlation ID + Prometheus + Grafana |
-| NFR-9 | Rate Limiting | 100 RPS/user | Nginx + ASP.NET Rate Limiter |
-| NFR-10 | Recovery time | < 15 сек | Circuit Breaker 15s + docker/k8s restart |
-| NFR-11 | Нагрузка | 100+ одновременных | Single instance per service |
-| NFR-12 | Secrets | Нет plaintext | Docker Secrets / k8s Secrets |
-| NFR-13 | Аутентификация | Делегированная | Zitadel (OIDC) |
+| NFR‑1 | Латентность сообщения | p95 < 200ms | SignalR broadcast |
+| NFR‑2 | Задержка голоса | < 150ms | LiveKit SFU + TURN |
+| NFR‑3 | Доступность | 99% | Health checks, restart, Circuit Breaker |
+| NFR‑4 | Безопасность | TLS 1.3 | HTTPS, WSS, DTLS |
+| NFR‑5 | Надежность доставки | At-least-once | Outbox Pattern |
+| NFR‑6 | Чтение истории | < 200ms | Cursor pagination, индексы |
+| NFR‑7 | Масштабируемость | Архитектурная готовность | Микросервисы, stateless |
+| NFR‑8 | Наблюдаемость | Full stack | Serilog JSON + Correlation ID + Prometheus + Grafana |
+| NFR‑9 | Rate Limiting | 100 RPS/user | Nginx + ASP.NET Rate Limiter |
+| NFR‑10 | Recovery time | < 15 сек | Circuit Breaker 15s + docker/k8s restart |
+| NFR‑11 | Нагрузка | 100+ одновременных | Single instance per service |
+| NFR‑12 | Secrets | Нет plaintext | Docker Secrets / k8s Secrets |
+| NFR‑13 | Аутентификация | Делегированная | Zitadel (OIDC) |
 
 ---
 
