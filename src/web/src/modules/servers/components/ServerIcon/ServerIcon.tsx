@@ -1,6 +1,6 @@
 import React from 'react'
-import { Icon } from '../Icon/Icon'
 import styles from './ServerIcon.module.scss'
+import {Icon} from "../../../../shared/components/Icon/Icon.tsx";
 
 interface ServerIconProps {
     type?: 'game' | 'dev' | 'music' | 'study' | 'friends' | 'settings' | 'default'

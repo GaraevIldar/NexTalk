@@ -1,8 +1,8 @@
 import React from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useServerStore } from '../../../modules/servers/stores/serverStore'
-import { ServerIcon } from '../ServerIcon/ServerIcon'
 import styles from './ServerSidebar.module.scss'
+import {ServerIcon} from "../../../modules/servers/components/ServerIcon/ServerIcon.tsx";
 
 // Определяем тип сервера по названию
 const getServerType = (name: string): 'game' | 'dev' | 'music' | 'study' | 'friends' | 'default' => {

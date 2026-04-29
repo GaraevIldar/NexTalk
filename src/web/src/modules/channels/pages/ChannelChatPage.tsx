@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../../auth/stores/authStore'
 import { useChatStore } from '../../chat/stores/chatStore'
 import { useChannelStore } from '../stores/channelStore'
@@ -14,11 +14,11 @@ import styles from './ChannelChatPage.module.scss'
 
 export const ChannelChatPage: React.FC = () => {
     const { serverId, channelId } = useParams()
+    const navigate = useNavigate()
     const { user } = useAuthStore()
     const { messages, sendMessage } = useChatStore()
     const { channels, fetchChannels } = useChannelStore()
 
-    // Загружаем каналы при монтировании или смене сервера
     useEffect(() => {
         if (serverId) {
             fetchChannels(serverId)
@@ -33,7 +33,12 @@ export const ChannelChatPage: React.FC = () => {
         sendMessage(channelId, text, user.id, user.username)
     }
 
-    // Пока загружаем
+    const handleInvite = () => {
+        if (serverId) {
+            navigate(`/servers/${serverId}/invite`)
+        }
+    }
+
     if (!serverId) {
         return (
             <div className={styles.layout}>
@@ -45,7 +50,6 @@ export const ChannelChatPage: React.FC = () => {
         )
     }
 
-    // Если канал не найден
     if (!currentChannel && channels.length > 0) {
         return (
             <div className={styles.layout}>
@@ -71,7 +75,6 @@ export const ChannelChatPage: React.FC = () => {
         )
     }
 
-    // Если каналы еще грузятся
     if (!currentChannel) {
         return (
             <div className={styles.layout}>
@@ -96,7 +99,11 @@ export const ChannelChatPage: React.FC = () => {
                         <Icon name="hash" size={20} />
                         <span>{currentChannel.name}</span>
                     </div>
-                    <Button variant="secondary" size="small">
+                    <Button
+                        variant="secondary"
+                        size="small"
+                        onClick={handleInvite}
+                    >
                         <Icon name="plus" size={14} />
                         Пригласить
                     </Button>
