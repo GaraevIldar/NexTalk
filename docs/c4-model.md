@@ -31,7 +31,7 @@
 
 | Тип | Контейнер | Технология | Описание |
 |:--|:--|:--|:--|
-| App | Vue.js SPA | Vue 3, TypeScript | UI, OIDC-клиент, SignalR, LiveKit |
+| App | React SPA | React, TypeScript | UI, OIDC-клиент, SignalR, LiveKit |
 | App | Nginx | Nginx / Ingress Controller | Reverse proxy, rate limiting, routing |
 | App | WebSocket Gateway | ASP.NET + SignalR | WS-соединения, broadcast, presence |
 | App | Guild Service | ASP.NET | Серверы, каналы, роли, инвайты, модерация |
@@ -144,9 +144,9 @@ tags:
   groupId: tg-tech
   name: ASP.NET
   color: blue
-- id: tag-vue
+- id: tag-react
   groupId: tg-tech
-  name: Vue.js 3
+  name: React
   color: green
 - id: tag-go
   groupId: tg-tech
@@ -194,12 +194,12 @@ modelObjects:
 
 # --- Frontend ---
 - id: app-spa
-  name: Vue.js SPA
+  name: React SPA
   type: app
   parentId: system-nextalk
   description: 'UI: OIDC-клиент (oidc-client-ts), SignalR, LiveKit-клиент'
-  caption: Vue 3 + TypeScript
-  tagIds: [tag-frontend, tag-vue]
+  caption: React + TypeScript
+  tagIds: [tag-frontend, tag-react]
 
 # --- Nginx ---
 - id: app-nginx
@@ -566,28 +566,28 @@ modelConnections:
 ### Flow 1: Регистрация и логин (OIDC)
 
 ```
-1. Пользователь → Vue SPA: Нажимает «Войти»
-2. Vue SPA: oidc-client-ts создаёт Authorization Request
+1. Пользователь → React SPA: Нажимает «Войти»
+2. React SPA: oidc-client-ts создаёт Authorization Request
    URL: /auth/oauth/v2/authorize?client_id=...&redirect_uri=...
         &response_type=code&scope=openid+profile+email&code_challenge=...
 3. Browser → Nginx → Zitadel: Redirect на Zitadel Login UI
 4. Пользователь: Вводит email + пароль (или регистрируется)
 5. Zitadel: Валидация → создание сессии
 6. Zitadel → Browser: Redirect на /callback?code=AUTH_CODE
-7. Vue SPA: oidc-client-ts обменивает code на tokens
+7. React SPA: oidc-client-ts обменивает code на tokens
    POST /auth/oauth/v2/token (через Nginx → Zitadel)
    Body: grant_type=authorization_code, code, code_verifier (PKCE)
-8. Zitadel → Vue SPA: { access_token (JWT), refresh_token, id_token }
-9. Vue SPA → Pinia store: Сохранить access_token в памяти
+8. Zitadel → React SPA: { access_token (JWT), refresh_token, id_token }
+9. React SPA → Redux store: Сохранить access_token в памяти
    Декодировать JWT → sub, email, name → currentUser
-10. Vue SPA: Redirect на главную страницу приложения
+10. React SPA: Redirect на главную страницу приложения
 ```
 
 ### Flow 2: Создание сервера
 
 ```
-1. Пользователь → Vue SPA: «+» → ввод названия → «Создать»
-2. Vue SPA → Nginx: POST /api/guilds { name } + Authorization: Bearer JWT
+1. Пользователь → React SPA: «+» → ввод названия → «Создать»
+2. React SPA → Nginx: POST /api/guilds { name } + Authorization: Bearer JWT
 3. Nginx: Проверяет rate limit, добавляет X-Request-Id
 4. Nginx → Guild Service: Proxy POST /api/guilds
 5. Guild Service: Валидация JWT (OIDC discovery → Zitadel)
@@ -599,15 +599,15 @@ modelConnections:
      INSERT INTO channels (guild_id, name='general', type='text')
    COMMIT
 7. Guild Service → Nginx: 201 Created { guild }
-8. Nginx → Vue SPA: Сервер появляется в панели
+8. Nginx → React SPA: Сервер появляется в панели
 ```
 
 ### Flow 3: Отправка сообщения
 
 ```
-1. Пользователь A → Vue SPA: Текст → «Отправить»
-2. Vue SPA: idempotencyKey = crypto.randomUUID()
-3. Vue SPA → Nginx → WS Gateway (SignalR):
+1. Пользователь A → React SPA: Текст → «Отправить»
+2. React SPA: idempotencyKey = crypto.randomUUID()
+3. React SPA → Nginx → WS Gateway (SignalR):
    SendMessage(channelId, text, idempotencyKey)
 
 4. WS Gateway → Guild Service (HTTP, Polly: Retry+CB):
@@ -644,8 +644,8 @@ modelConnections:
 ### Flow 4: Подключение к голосовому каналу
 
 ```
-1. Пользователь → Vue SPA: «Войти» в голосовом канале
-2. Vue SPA → Nginx: POST /api/voice/{channelId}/join + JWT
+1. Пользователь → React SPA: «Войти» в голосовом канале
+2. React SPA → Nginx: POST /api/voice/{channelId}/join + JWT
 
 3. Voice Service → Guild Service (HTTP, Polly):
    GET /internal/channels/{channelId}/check-access?userId=X
@@ -657,25 +657,25 @@ modelConnections:
 7. Voice Service: Генерирует LiveKit JWT:
    { room: channelId, identity: userId, canPublish: true, canSubscribe: true }
 8. Voice Service → SessionStore: Добавить userId в participants
-9. Voice Service → Nginx → Vue SPA: 200 { token, livekitUrl }
+9. Voice Service → Nginx → React SPA: 200 { token, livekitUrl }
 
-10. Vue SPA: const room = new Room()
+10. React SPA: const room = new Room()
     await room.connect(livekitUrl, token)
-11. Vue SPA → LiveKit (WebRTC): Подключение, публикация аудио
+11. React SPA → LiveKit (WebRTC): Подключение, публикация аудио
 12. LiveKit: Пересылает SRTP-пакеты другим участникам
 
 13. Voice Service → WS Gateway (HTTP):
     POST /internal/broadcast { type: 'voice.joined', userId, channelId }
-14. WS Gateway → Vue SPA (участники): Обновить список голосового канала
+14. WS Gateway → React SPA (участники): Обновить список голосового канала
 ```
 
 ### Flow 5: Вступление по инвайту
 
 ```
-1. Приглашённый → Vue SPA: Открывает /invite/{code}
-2. Vue SPA: Проверяет авторизацию (есть JWT?)
+1. Приглашённый → React SPA: Открывает /invite/{code}
+2. React SPA: Проверяет авторизацию (есть JWT?)
    Если нет → redirect на Zitadel для логина → callback → /invite/{code}
-3. Vue SPA → Nginx: POST /api/invites/{code}/accept + JWT
+3. React SPA → Nginx: POST /api/invites/{code}/accept + JWT
 4. Nginx → Guild Service: Proxy
 5. Guild Service: Валидация JWT → userId, displayName из claims
 6. Guild Service → PostgreSQL:
@@ -684,19 +684,19 @@ modelConnections:
      INSERT INTO members (guild_id, user_id, display_name, role='Member')
      UPDATE invites SET uses = uses + 1
    COMMIT
-7. Guild Service → Nginx → Vue SPA: 200 OK { guild }
-8. Vue SPA: Сервер появляется в левой панели
+7. Guild Service → Nginx → React SPA: 200 OK { guild }
+8. React SPA: Сервер появляется в левой панели
 
 9. Guild Service → WS Gateway (HTTP):
    POST /internal/broadcast { type: 'member.joined', userId, guildId }
-10. WS Gateway → Vue SPA (онлайн-участники): Обновить список
+10. WS Gateway → React SPA (онлайн-участники): Обновить список
 ```
 
 ### Flow 6: Кик/Бан
 
 ```
-1. Admin → Vue SPA: ПКМ → «Забанить» → подтверждение
-2. Vue SPA → Nginx: POST /api/guilds/{guildId}/members/{userId}/ban { reason }
+1. Admin → React SPA: ПКМ → «Забанить» → подтверждение
+2. React SPA → Nginx: POST /api/guilds/{guildId}/members/{userId}/ban { reason }
 3. Nginx → Guild Service: Proxy
 
 4. Guild Service: Проверяет иерархию:
@@ -724,7 +724,7 @@ modelConnections:
 ### Flow 7: Heartbeat и Presence
 
 ```
-1. Vue SPA: Каждые 20 сек → WS Gateway (SignalR): Heartbeat()
+1. React SPA: Каждые 20 сек → WS Gateway (SignalR): Heartbeat()
 2. WS Gateway → PresenceTracker:
    dictionary[userId] = DateTime.UtcNow
 
@@ -744,13 +744,13 @@ modelConnections:
 ```
 Сценарий: Guild Service упал при отправке сообщения.
 
-1. Vue SPA → WS Gateway: SendMessage(channelId, text)
+1. React SPA → WS Gateway: SendMessage(channelId, text)
 2. WS Gateway → Guild Service: GET /internal/channels/{id}/check-access
    Попытка 1: Timeout 2с → Retry (backoff 200ms)
    Попытка 2: Connection refused → Retry (backoff 400ms)
    Попытка 3: Connection refused → Fail
 3. Polly: ошибок > 5 за 30с → Circuit OPEN
-4. WS Gateway → Vue SPA: { type: "error", message: "Сервис временно недоступен" }
+4. WS Gateway → React SPA: { type: "error", message: "Сервис временно недоступен" }
 
 5. Следующие 15 сек: любой запрос к Guild → мгновенный 503 (без сети)
 
@@ -762,8 +762,8 @@ modelConnections:
 ### Flow 9: Демонстрация Idempotency Key
 
 ```
-1. Vue SPA: idempotencyKey = "550e8400-..."
-2. Vue SPA → WS Gateway: SendMessage(channelId, text, idempotencyKey)
+1. React SPA: idempotencyKey = "550e8400-..."
+2. React SPA → WS Gateway: SendMessage(channelId, text, idempotencyKey)
 3. WS Gateway → Messaging: POST /internal/messages, X-Idempotency-Key: 550e8400
 4. Messaging → PostgreSQL: INSERT message + outbox + idempotency_key
 5. Messaging → WS Gateway: 201 Created { messageId: "abc" }

@@ -7,14 +7,16 @@ import { CreateChannelPage } from './modules/channels/pages/CreateChannelPage'
 import { MembersPage } from './modules/members/pages/MembersPage'
 import { ProfilePage } from './modules/profile/pages/ProfilePage'
 import { InvitePage } from './modules/invite/pages/InvitePage'
-import {NotFoundPage} from "./pages/errors/NotFoundPage.tsx";
-import {ServerErrorPage} from "./pages/errors/ServerErrorPage.tsx";
+import { NotFoundPage } from './pages/errors/NotFoundPage'
+import { ServerErrorPage } from './pages/errors/ServerErrorPage'
+import { AuthPage } from './modules/auth/pages/AuthPage'
 
 function App() {
     return (
         <BrowserRouter>
             <Routes>
-                <Route path="/" element={<Navigate to="/servers" replace />} />
+                <Route path="/" element={<Navigate to="/auth" replace />} />
+                <Route path="/auth" element={<AuthPage />} />
                 <Route path="/servers" element={<ServersPage />} />
                 <Route path="/servers/:serverId/channels/:channelId" element={<ChannelChatPage />} />
                 <Route path="/servers/:serverId/voice/:channelId" element={<VoiceChannelPage />} />
