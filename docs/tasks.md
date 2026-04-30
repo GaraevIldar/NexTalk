@@ -69,8 +69,8 @@
 
 | # | Задача | Часы | Результат | Зависит от |
 |:--|:--|:--|:--|:--|
-| Ф1‑01 | Создать Vue 3 + TypeScript + Vite проект: Pinia, Vue Router, axios | 2 | `npm run dev` - пустой проект запускается | - |
-| Ф1‑02 | OIDC-интеграция: oidc-client-ts, UserManager конфиг (client_id, redirect_uri, Zitadel) | 4 | Кнопка «Войти» → redirect на Zitadel → callback → JWT в Pinia | Б2‑01 |
+| Ф1‑01 | Создать React + TypeScript + Vite проект: Redux Toolkit, React Router, axios | 2 | `npm run dev` - пустой проект запускается | - |
+| Ф1‑02 | OIDC-интеграция: oidc-client-ts, UserManager конфиг (client_id, redirect_uri, Zitadel) | 4 | Кнопка «Войти» → redirect на Zitadel → callback → JWT в Redux store | Б2‑01 |
 | Ф1‑03 | axios interceptor: Authorization header, refresh token, 401 → redirect | 2 | Все запросы с Bearer token, auto-refresh | Ф1‑02 |
 | Ф1‑04 | Layout: CSS Grid - серверы (лево), каналы, чат, участники (право) | 5 | 4-колоночный layout, placeholder контент | Ф1‑01 |
 | Ф1‑05 | Страница серверов: GuildList (иконки), GuildCreate (форма), роутинг /guilds/:id | 5 | Создание сервера через UI, переход между серверами | Ф1‑03, Ф1‑04 |
@@ -80,7 +80,7 @@
 | # | Задача | Часы | Результат | Зависит от |
 |:--|:--|:--|:--|:--|
 | Ф2‑01 | SignalR клиент: @microsoft/signalr, HubConnection, автоматический reconnect | 4 | WS-соединение с WS Gateway, авто-реконнект | Б2‑03, Ф1‑02 |
-| Ф2‑02 | Pinia store для чата: messages[], sendMessage(), loadHistory() | 3 | Отправка и получение сообщений в Pinia | Ф2‑01, Ф1‑03 |
+| Ф2‑02 | Redux store для чата: messages[], sendMessage(), loadHistory() | 3 | Отправка и получение сообщений в Redux | Ф2‑01, Ф1‑03 |
 | Ф2‑03 | ChatView: MessageList (scroll-to-bottom), MessageInput, cursor-подгрузка вверх | 5 | Чат работает: набрал → отправил → все видят | Ф2‑02 |
 | Ф2‑04 | ChannelList: отображение текстовых и голосовых каналов, создание канала (Admin/Owner) | 3 | Список каналов, кнопка создания | Ф1‑05 |
 | Ф2‑05 | MemberList: список участников с ролями и статусами (online/offline) | 3 | Правая панель - иконки, имена, роли, зеленые/серые точки | Ф2‑04, Б2‑04 |
@@ -222,7 +222,7 @@
 
 | # | Задача | Часы | Результат | Зависит от |
 |:--|:--|:--|:--|:--|
-| Ф1‑15 | Dockerfile для Vue SPA: multi-stage build (npm build → Nginx:alpine serve) | 2 | Docker-образ с SPA, < 50MB | Ф1‑01 |
+| Ф1‑15 | Dockerfile для React SPA: multi-stage build (npm build → Nginx:alpine serve) | 2 | Docker-образ с SPA, < 50MB | Ф1‑01 |
 | Ф1‑16 | Финальный polish: анимации, loading states, skeleton screens | 5 | UI выглядит завершенным | Ф1‑14 |
 | Ф1‑17 | Демо-сценарий UI: подготовить тестовые данные, проверить все переходы | 3 | Демо-данные готовы (серверы, каналы, сообщения) | Б2-24 |
 | Ф1‑18 | Баг-фиксы из k8s тестирования | 7 | Все UI-баги закрыты | Б2-21 |
@@ -231,7 +231,7 @@
 
 | # | Задача | Часы | Результат | Зависит от |
 |:--|:--|:--|:--|:--|
-| Ф2‑15 | Dockerfile для Vue SPA (если Ф1 не успевает) или кросс-ревью | 2 | Docker-образ готов | Ф1‑15 |
+| Ф2‑15 | Dockerfile для React SPA (если Ф1 не успевает) или кросс-ревью | 2 | Docker-образ готов | Ф1‑15 |
 | Ф2‑16 | Voice polish: отображение уровня громкости, плавные анимации join/leave | 4 | Голосовой UI выглядит завершенным | Ф2‑08 |
 | Ф2‑17 | Accessibility и edge cases: пустые состояния, длинные имена, ошибки сети | 4 | Нет битых состояний UI | Ф2‑14 |
 | Ф2‑18 | Баг-фиксы из k8s тестирования | 7 | Все UI-баги закрыты | Б2-21 |
@@ -253,9 +253,9 @@
   │     └── Б1‑08 (Voice Module) ──→ Б1‑09 (LiveKit) ──→ Ф2‑06 (Voice UI) ──→ Ф2‑07 (livekit-client)
   ├── Б1‑04 (Serilog)
   └── Б2‑03 (SignalR Hub) ──→ Б2‑04 (Presence) ──→ Б2‑05 (интерфейсы)
-        └── Ф2‑01 (SignalR client) ──→ Ф2‑02 (Pinia chat) ──→ Ф2‑03 (ChatView)
+        └── Ф2‑01 (SignalR client) ──→ Ф2‑02 (Redux chat) ──→ Ф2‑03 (ChatView)
 
-Ф1‑01 (Vue проект)
+Ф1‑01 (React проект)
   ├── Ф1‑02 (OIDC) ──→ Ф1‑03 (axios) ──→ Ф1‑05 (Серверы UI)
   └── Ф1‑04 (Layout)
 
