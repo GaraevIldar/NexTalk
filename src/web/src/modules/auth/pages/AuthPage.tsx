@@ -1,27 +1,40 @@
 import React, { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { login, selectIsLoading, selectAuthError } from '../stores/authSlice'
 import { GradientBackground } from '../../../shared/components/GradientBackground/GradientBackground'
 import { AuthCard } from '../components/AuthCard'
 import styles from './AuthPage.module.scss'
+import {useAppDispatch, useAppSelector} from "../../../store.ts";
 
 export const AuthPage: React.FC = () => {
-    const navigate = useNavigate()
+    const dispatch = useAppDispatch()
+    const isLoading = useAppSelector(selectIsLoading)
+    const error = useAppSelector(selectAuthError)
     const [isLogin, setIsLogin] = useState(true)
+    const [demoMode, setDemoMode] = useState(false)
 
-    const handleLogin = (email: string, password: string) => {
-        console.log('Login:', email, password)
-        // Здесь будет логика авторизации
-        navigate('/profile')
+    const handleLogin = async () => {
+        await dispatch(login())
     }
 
-    const handleRegister = (username: string, email: string, password: string, confirmPassword: string) => {
-        console.log('Register:', username, email, password, confirmPassword)
-        // Здесь будет логика регистрации
-        navigate('/profile')
+    const handleRegister = async () => {
+        // Реальный OIDC flow с параметром prompt=create
+        const authUrl = new URL(import.meta.env.VITE_OIDC_AUTHORITY + '/oauth/v2/authorize')
+        authUrl.searchParams.set('client_id', import.meta.env.VITE_OIDC_CLIENT_ID)
+        authUrl.searchParams.set('redirect_uri', import.meta.env.VITE_OIDC_REDIRECT_URI)
+        authUrl.searchParams.set('response_type', 'code')
+        authUrl.searchParams.set('scope', 'openid profile email offline_access')
+        authUrl.searchParams.set('prompt', 'create')
+
+        window.location.href = authUrl.toString()
+
     }
 
     const toggleMode = () => {
         setIsLogin(!isLogin)
+    }
+
+    const toggleDemoMode = () => {
+        setDemoMode(!demoMode)
     }
 
     return (
@@ -32,7 +45,16 @@ export const AuthPage: React.FC = () => {
                     onLogin={handleLogin}
                     onRegister={handleRegister}
                     onToggleMode={toggleMode}
+                    isLoading={isLoading}
+                    error={error || undefined}
                 />
+
+                {/* Кнопка для переключения демо-режима (только для разработки) */}
+                {import.meta.env.DEV && (
+                    <button onClick={toggleDemoMode} className={styles.demoToggle}>
+                        {demoMode ? 'Режим: ДЕМО' : 'Режим: OIDC'}
+                    </button>
+                )}
             </div>
         </GradientBackground>
     )

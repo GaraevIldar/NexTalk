@@ -1,12 +1,13 @@
 ﻿import React, { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { useAuthStore } from '../../auth/stores/authStore'
 import { ServerSidebar } from '../../../shared/components/Layout/ServerSidebar'
 import { ChannelSidebar } from '../../channels/components/ChannelSidebar'
 import { VoiceControls } from '../components/VoiceControls'
 import { VoiceParticipantList } from '../components/VoiceParticipantList'
 import styles from './VoiceChannelPage.module.scss'
 import {VoiceParticipantProps} from "../components/VoiceParticipant.tsx";
+import {useAppSelector} from "../../../store.ts";
+import {selectUser} from "../../auth/stores/authSlice.ts";
 
 const mockParticipants: VoiceParticipantProps[] = [
   { id: '1', name: 'Алексей', avatar: 'А', isSpeaking: true, isMuted: false, isDeafened: false, volume: 75 },
@@ -18,7 +19,7 @@ const mockParticipants: VoiceParticipantProps[] = [
 export const VoiceChannelPage: React.FC = () => {
   const navigate = useNavigate()
   const { serverId } = useParams()
-  const { user } = useAuthStore()
+  const user = useAppSelector(selectUser)
 
   const [isMuted, setIsMuted] = useState(false)
   const [isDeafened, setIsDeafened] = useState(false)

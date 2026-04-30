@@ -1,23 +1,31 @@
 import React from 'react'
-import { Server } from '../stores/serverStore'
 import styles from './ServerCard.module.scss'
+import {Guild} from "../../../shared/types/requestTypes.ts";
 
 interface ServerCardProps {
-    server: Server
+    server: Guild
     onClick: () => void
 }
 
 export const ServerCard: React.FC<ServerCardProps> = ({ server, onClick }) => {
     return (
         <div className={styles.card} onClick={onClick}>
-            <div className={styles.header}>
-                <div className={styles.online}>{server.onlineCount} онлайн</div>
+            <div className={styles.icon}>
+                {server.icon ? (
+                    <img src={server.icon} alt={server.name} />
+                ) : (
+                    <div className={styles.placeholder}>
+                        {server.name.charAt(0).toUpperCase()}
+                    </div>
+                )}
             </div>
-            <div className={styles.description}>{server.description}</div>
-            <div className={styles.stats}>
-                <span>5 каналов</span>
-                <span>{server.memberCount} участников</span>
+            <div className={styles.name}>{server.name}</div>
+            <div className={styles.members}>
+                👥 {server.memberCount || 0} участников
             </div>
+            {server.description && (
+                <div className={styles.description}>{server.description}</div>
+            )}
         </div>
     )
 }

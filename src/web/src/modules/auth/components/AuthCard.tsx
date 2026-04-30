@@ -7,6 +7,8 @@ interface AuthCardProps {
     onLogin: (email: string, password: string) => void
     onRegister: (username: string, email: string, password: string, confirmPassword: string) => void
     onToggleMode: () => void
+    isLoading?: boolean
+    error?: string
 }
 
 export const AuthCard: React.FC<AuthCardProps> = ({
@@ -14,6 +16,8 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                                                       onLogin,
                                                       onRegister,
                                                       onToggleMode,
+                                                      isLoading = false,
+                                                      error,
                                                   }) => {
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
@@ -68,6 +72,12 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                     : 'Заполните форму для регистрации'}
             </p>
 
+            {error && (
+                <div className={styles.errorMessage}>
+                    {error}
+                </div>
+            )}
+
             <form onSubmit={handleSubmit} className={styles.form}>
                 {!isLogin && (
                     <div className={styles.field}>
@@ -81,6 +91,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                             onChange={(e) => setUsername(e.target.value)}
                             placeholder="Введите имя"
                             className={`${styles.input} ${errors.username ? styles.inputError : ''}`}
+                            disabled={isLoading}
                         />
                         {errors.username && <span className={styles.error}>{errors.username}</span>}
                     </div>
@@ -97,6 +108,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                         onChange={(e) => setEmail(e.target.value)}
                         placeholder="example@mail.ru"
                         className={`${styles.input} ${errors.email ? styles.inputError : ''}`}
+                        disabled={isLoading}
                     />
                     {errors.email && <span className={styles.error}>{errors.email}</span>}
                 </div>
@@ -112,6 +124,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                         onChange={(e) => setPassword(e.target.value)}
                         placeholder="••••••••"
                         className={`${styles.input} ${errors.password ? styles.inputError : ''}`}
+                        disabled={isLoading}
                     />
                     {errors.password && <span className={styles.error}>{errors.password}</span>}
                 </div>
@@ -128,19 +141,28 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                             onChange={(e) => setConfirmPassword(e.target.value)}
                             placeholder="••••••••"
                             className={`${styles.input} ${errors.confirmPassword ? styles.inputError : ''}`}
+                            disabled={isLoading}
                         />
                         {errors.confirmPassword && <span className={styles.error}>{errors.confirmPassword}</span>}
                     </div>
                 )}
 
-                <button type="submit" className={styles.submitBtn}>
+                <button
+                    type="submit"
+                    className={styles.submitBtn}
+                    disabled={isLoading}
+                >
                     <Icon name={isLogin ? "login" : "user-plus"} size={18} />
-                    {isLogin ? 'Войти' : 'Зарегистрироваться'}
+                    {isLoading ? 'Загрузка...' : (isLogin ? 'Войти' : 'Зарегистрироваться')}
                 </button>
             </form>
 
             <div className={styles.footer}>
-                <button onClick={onToggleMode} className={styles.toggleBtn}>
+                <button
+                    onClick={onToggleMode}
+                    className={styles.toggleBtn}
+                    disabled={isLoading}
+                >
                     {isLogin
                         ? 'Нет аккаунта? Зарегистрироваться'
                         : 'Уже есть аккаунт? Войти'}

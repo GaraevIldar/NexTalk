@@ -1,6 +1,5 @@
 import React, { useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { useAuthStore } from '../../auth/stores/authStore'
 import { useChatStore } from '../../chat/stores/chatStore'
 import { useChannelStore } from '../stores/channelStore'
 import { MessageList } from '../../chat/components/MessageList'
@@ -11,11 +10,13 @@ import { MembersSidebar } from '../../../shared/components/Layout/MembersSidebar
 import { Button } from '../../../shared/components/Button/Button'
 import { Icon } from '../../../shared/components/Icon/Icon'
 import styles from './ChannelChatPage.module.scss'
+import {useAppSelector} from "../../../store.ts";
+import {selectUser} from "../../auth/stores/authSlice.ts";
 
 export const ChannelChatPage: React.FC = () => {
     const { serverId, channelId } = useParams()
     const navigate = useNavigate()
-    const { user } = useAuthStore()
+    const user = useAppSelector(selectUser)
     const { messages, sendMessage } = useChatStore()
     const { channels, fetchChannels } = useChannelStore()
 
