@@ -7,6 +7,8 @@ import { CreateChannelPage } from './modules/channels/pages/CreateChannelPage'
 import { MembersPage } from './modules/members/pages/MembersPage'
 import { ProfilePage } from './modules/profile/pages/ProfilePage'
 import { InvitePage } from './modules/invite/pages/InvitePage'
+import {NotFoundPage} from "./pages/errors/NotFoundPage.tsx";
+import {ServerErrorPage} from "./pages/errors/ServerErrorPage.tsx";
 
 function App() {
     return (
@@ -21,6 +23,8 @@ function App() {
                 <Route path="/servers/:serverId/members" element={<MembersPage />} />
                 <Route path="/servers/:serverId/invite" element={<InvitePage />} />
                 <Route path="/profile" element={<ProfilePage />} />
+                <Route path="/error" element={<ServerErrorPage />} />
+                <Route path="*" element={<NotFoundPage />} />
             </Routes>
         </BrowserRouter>
     )
