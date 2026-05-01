@@ -8,6 +8,48 @@
 
 ---
 
+## Навигация
+
+| Что вам нужно сделать | Идите сюда |
+|:--|:--|
+| Посмотреть готовую интерактивную C4 модель | [[NexTalk] IcePanel](https://s.icepanel.io/r7Jqd2EfeDO3JL/jcOE) |
+| Быстро понять, из чего состоит система | [C4 Level 1 - System Context](#c4-level-1---system-context) |
+| Увидеть все контейнеры и их роли | [C4 Level 2 - Container Diagram](#c4-level-2---container-diagram) |
+| Найти конкретный компонент сервиса | [C4 Level 3 - Components](#c4-level-3---components) |
+| Импортировать модель в IcePanel | [YAML для импорта](#yaml-для-импорта-в-icepanel) |
+| Понять конкретный пользовательский сценарий | [Flows](#flows) |
+| Найти flow по теме (аутентификация, голос, модерация...) | [Индекс flows](#индекс-flows) |
+| Проверить, как работает отказоустойчивость | [Flow 8 - Circuit Breaker](#flow-8-демонстрация-circuit-breaker), [Flow 9 - Idempotency](#flow-9-демонстрация-idempotency-key), [Flow 16 - Deadline](#flow-16-демонстрация-deadline-504) |
+| Вернуться к общей документации проекта | [README.md](../README.md) |
+
+---
+
+## Индекс flows
+
+| Flow | Тема | FR |
+|:--|:--|:--|
+| [Flow 1](#flow-1-регистрация-и-логин-oidc) | Регистрация и логин (OIDC) | FR-1, FR-2 |
+| [Flow 2](#flow-2-создание-сервера) | Создание сервера | FR-5 |
+| [Flow 3](#flow-3-отправка-сообщения) | Отправка сообщения | FR-15, FR-18, FR-19 |
+| [Flow 4](#flow-4-подключение-к-голосовому-каналу) | Подключение к голосовому каналу | FR-21 |
+| [Flow 5](#flow-5-вступление-по-инвайту) | Вступление по инвайту | FR-12 |
+| [Flow 6](#flow-6-kickбан) | Кик/Бан | FR-25, FR-26 |
+| [Flow 7](#flow-7-heartbeat-и-presence) | Heartbeat и Presence | FR-27, FR-28 |
+| [Flow 8](#flow-8-демонстрация-circuit-breaker) | ⚡ Демонстрация Circuit Breaker | - |
+| [Flow 9](#flow-9-демонстрация-idempotency-key) | ⚡ Демонстрация Idempotency Key | FR-20 |
+| [Flow 10](#flow-10-отключение-от-голосового-канала) | Отключение от голосового канала | FR-22 |
+| [Flow 11](#flow-11-загрузка-истории-сообщений) | Загрузка истории сообщений | FR-16 |
+| [Flow 12](#flow-12-генерация-инвайт-ссылки) | Генерация инвайт-ссылки | FR-11 |
+| [Flow 13](#flow-13-назначение-роли-участнику) | Назначение роли участнику | FR-13 |
+| [Flow 14](#flow-14-удаление-сообщения) | Удаление сообщения | FR-17 |
+| [Flow 15](#flow-15-silent-refresh-автоматическое-обновление-токена) | Silent Refresh | FR-3 |
+| [Flow 16](#flow-16-демонстрация-deadline-504) | ⚡ Демонстрация Deadline (504) | - |
+| [Flow 17](#flow-17-создание-канала) | Создание канала | FR-6, FR-7 |
+| [Flow 18](#flow-18-удаление-канала) | Удаление канала | FR-10 |
+| [Flow 19](#flow-19-удаление-сервера) | Удаление сервера | FR-30 |
+
+---
+
 ## Как импортировать в IcePanel
 
 1. Зарегистрируйтесь на [app.icepanel.io](https://app.icepanel.io).
@@ -604,7 +646,7 @@ modelConnections:
 
 ```
 1. Пользователь → React SPA: Нажимает "Войти"
-2. React SPA: oidc-client-ts создаёт Authorization Request
+2. React SPA: oidc-client-ts создает Authorization Request
    URL: /auth/oauth/v2/authorize?client_id=...&redirect_uri=...
         &response_type=code&scope=openid+profile+email&code_challenge=...
 3. React SPA → Nginx → Zitadel: браузер переходит на форму логина Zitadel (OIDC redirect)
@@ -714,7 +756,7 @@ modelConnections:
 ### Flow 5: Вступление по инвайту
 
 ```
-1. Приглашённый → React SPA: Открывает /invite/{code}
+1. Приглашенный → React SPA: Открывает /invite/{code}
 2. React SPA: Проверяет авторизацию (есть JWT?)
    Если нет → redirect на Zitadel для логина → callback → /invite/{code}
 3. React SPA → Nginx: POST /api/invites/{code}/accept + JWT
@@ -937,7 +979,7 @@ modelConnections:
 
 6. Messaging Service → PostgreSQL:
    DELETE FROM messages WHERE id={messageId}
-   (outbox_event для broadcast не нужен - сообщение удаляется, не создаётся)
+   (outbox_event для broadcast не нужен - сообщение удаляется, не создается)
 
 7. Messaging Service → WS Gateway (HTTP):
    POST /internal/broadcast { type: 'message.deleted', messageId, channelId }
@@ -954,7 +996,7 @@ modelConnections:
 Сценарий: access_token скоро истекает (за 60 сек до expiry).
 
 1. React SPA (oidc-client-ts): таймер обнаружил, что access_token истекает
-2. React SPA (oidc-client-ts): создаёт скрытый <iframe>
+2. React SPA (oidc-client-ts): создает скрытый <iframe>
    src="/auth/oauth/v2/authorize?response_type=code&prompt=none
         &client_id=...&redirect_uri=...&code_challenge=...&scope=openid+profile+email"
 
@@ -991,7 +1033,7 @@ modelConnections:
    Headers: X-Deadline = <UTC timestamp>
 
 3. Guild Service: DeadlineMiddleware проверяет X-Deadline
-   Если дедлайн НЕ истёк → обрабатывает запрос нормально
+   Если дедлайн НЕ истек → обрабатывает запрос нормально
 
 4. [Сценарий: Guild Service отвечает очень медленно (DB lock, GC pause и т.п.)]
    CancellationToken, привязанный к X-Deadline, срабатывает
