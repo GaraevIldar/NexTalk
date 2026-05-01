@@ -405,6 +405,18 @@ modelObjects:
   parentId: app-voice
   description: HTTP API LiveKit - создание/удаление комнат
 
+- id: comp-voice-internal
+  name: InternalVoiceController
+  type: component
+  parentId: app-voice
+  description: DELETE /internal/voice/{userId}/disconnect (при бане)
+
+- id: comp-voice-internal-channel
+  name: InternalVoiceChannelController
+  type: component
+  parentId: app-voice
+  description: DELETE /internal/voice/channel/{channelId}/disconnect-all (при удалении канала/сервера)
+
 modelConnections:
 
 # --- User → Frontend ---
@@ -509,7 +521,7 @@ modelConnections:
   originId: app-messaging
   targetId: app-ws-gateway
   direction: outgoing
-  description: 'Outbox → POST /internal/broadcast'
+  description: 'POST /internal/broadcast (Outbox для message.created; прямой вызов для message.deleted)'
 
 - id: conn-voice-guild
   name: HTTP (Polly)
@@ -530,7 +542,7 @@ modelConnections:
   originId: app-guild
   targetId: app-ws-gateway
   direction: outgoing
-  description: 'POST /internal/disconnect (при бане)'
+  description: 'POST /internal/broadcast (member/channel/guild events) + POST /internal/disconnect/{userId} (при бане)'
 
 - id: conn-guild-voice
   name: HTTP
@@ -591,7 +603,7 @@ modelConnections:
 ### Flow 1: Регистрация и логин (OIDC)
 
 ```
-1. Пользователь → React SPA: Нажимает «Войти»
+1. Пользователь → React SPA: Нажимает "Войти"
 2. React SPA: oidc-client-ts создаёт Authorization Request
    URL: /auth/oauth/v2/authorize?client_id=...&redirect_uri=...
         &response_type=code&scope=openid+profile+email&code_challenge=...
@@ -611,7 +623,7 @@ modelConnections:
 ### Flow 2: Создание сервера
 
 ```
-1. Пользователь → React SPA: «+» → ввод названия → «Создать»
+1. Пользователь → React SPA: "+" → ввод названия → "Создать"
 2. React SPA → Nginx: POST /api/guilds { name } + Authorization: Bearer JWT
 3. Nginx: Проверяет rate limit, добавляет X-Request-Id
 4. Nginx → Guild Service: Proxy POST /api/guilds
@@ -630,7 +642,7 @@ modelConnections:
 ### Flow 3: Отправка сообщения
 
 ```
-1. Пользователь A → React SPA: Текст → «Отправить»
+1. Пользователь A → React SPA: Текст → "Отправить"
 2. React SPA: idempotencyKey = crypto.randomUUID()
 3. React SPA → Nginx → WS Gateway (SignalR):
    SendMessage(channelId, text, idempotencyKey)
@@ -672,7 +684,7 @@ modelConnections:
 ### Flow 4: Подключение к голосовому каналу
 
 ```
-1. Пользователь → React SPA: «Войти» в голосовом канале
+1. Пользователь → React SPA: "Войти" в голосовом канале
 2. React SPA → Nginx: POST /api/voice/{channelId}/join + JWT
 3. Nginx → Voice Service: Proxy POST /api/voice/{channelId}/join
 
@@ -725,7 +737,7 @@ modelConnections:
 ### Flow 6: Кик/Бан
 
 ```
-1. Admin → React SPA: ПКМ → «Забанить» → подтверждение
+1. Admin → React SPA: ПКМ → "Забанить" → подтверждение
 2. React SPA → Nginx: POST /api/guilds/{guildId}/members/{userId}/ban { reason }
 3. Nginx → Guild Service: Proxy
 
@@ -809,7 +821,7 @@ modelConnections:
 ### Flow 10: Отключение от голосового канала
 
 ```
-1. Пользователь → React SPA: «Покинуть» голосовой канал
+1. Пользователь → React SPA: "Покинуть" голосовой канал
 2. React SPA → Nginx: POST /api/voice/{channelId}/leave + JWT
 3. Nginx → Voice Service: Proxy
 
@@ -853,4 +865,241 @@ modelConnections:
 8. Messaging Service → Nginx → React SPA:
    200 OK { messages: [...], nextCursor: "<id>" | null }
    (nextCursor = null → достигнуто начало истории)
+```
+
+### Flow 12: Генерация инвайт-ссылки
+
+```
+1. Owner/Admin → React SPA: "Пригласить участников" → настройка TTL и лимита
+2. React SPA → Nginx: POST /api/guilds/{guildId}/invites + JWT
+   Body: { expiresIn: "24h", maxUses: 25 }
+
+3. Nginx: rate limit, X-Request-Id → Proxy к Guild Service
+
+4. Guild Service: Валидация JWT → userId
+5. Guild Service → PostgreSQL: SELECT member WHERE user_id=X AND guild_id=Y
+   Проверка роли: Owner или Admin → разрешено, Member → 403
+
+6. Guild Service → PostgreSQL:
+   INSERT INTO invites (code=UUID, guild_id, created_by, expires_at=NOW()+TTL, max_uses)
+   code - криптографически случайный UUID (не предсказуемый)
+
+7. Guild Service → Nginx → React SPA:
+   201 Created { code: "abc123", url: "https://nextalk.app/invite/abc123",
+                 expiresAt, maxUses }
+
+8. React SPA: отображает ссылку → пользователь копирует и отправляет другу
+```
+
+### Flow 13: Назначение роли участнику
+
+```
+1. Owner → React SPA: ПКМ на участнике → "Назначить роль" → "Admin"
+2. React SPA → Nginx: PUT /api/guilds/{guildId}/members/{userId}/role + JWT
+   Body: { role: "Admin" }
+
+3. Nginx → Guild Service: Proxy
+
+4. Guild Service: Валидация JWT → callerId
+5. Guild Service → PostgreSQL:
+   SELECT member WHERE user_id=callerId AND guild_id=X
+   Проверка: callerRole == 'Owner' → разрешено
+             callerRole == 'Admin' или 'Member' → 403 Forbidden
+
+6. Guild Service → PostgreSQL:
+   UPDATE members SET role='Admin' WHERE user_id={userId} AND guild_id={guildId}
+
+7. Guild Service → WS Gateway (HTTP):
+   POST /internal/broadcast { type: 'member.roleChanged', userId, guildId, newRole: 'Admin' }
+8. WS Gateway → React SPA (участники гильда, SignalR):
+   { type: 'member.roleChanged', userId, newRole: 'Admin' }
+   (UI обновляет роль участника в реальном времени)
+
+9. Guild Service → Nginx → React SPA: 200 OK { userId, role: 'Admin' }
+```
+
+### Flow 14: Удаление сообщения
+
+```
+1. Пользователь → React SPA: ПКМ на сообщении → "Удалить" → подтверждение
+2. React SPA → Nginx: DELETE /api/messages/{messageId} + JWT
+
+3. Nginx → Messaging Service: Proxy DELETE /api/messages/{messageId}
+
+4. Messaging Service: Валидация JWT → callerId
+5. Messaging Service → PostgreSQL:
+   SELECT message WHERE id={messageId}
+   Проверяет: message.author_id == callerId → разрешено (автор)
+   Если нет → Messaging Service → Guild Service (HTTP, Polly: CB + Deadline):
+     GET /internal/channels/{channelId}/check-access?userId=callerId
+     Guild Service: callerRole == 'Admin' или 'Owner' → разрешено
+     Guild Service: callerRole == 'Member' → 403 Forbidden
+
+6. Messaging Service → PostgreSQL:
+   DELETE FROM messages WHERE id={messageId}
+   (outbox_event для broadcast не нужен - сообщение удаляется, не создаётся)
+
+7. Messaging Service → WS Gateway (HTTP):
+   POST /internal/broadcast { type: 'message.deleted', messageId, channelId }
+8. WS Gateway → React SPA (участники канала, SignalR):
+   { type: 'message.deleted', messageId }
+   (UI убирает сообщение из чата)
+
+9. Messaging Service → Nginx → React SPA: 204 No Content
+```
+
+### Flow 15: Silent Refresh (автоматическое обновление токена)
+
+```
+Сценарий: access_token скоро истекает (за 60 сек до expiry).
+
+1. React SPA (oidc-client-ts): таймер обнаружил, что access_token истекает
+2. React SPA (oidc-client-ts): создаёт скрытый <iframe>
+   src="/auth/oauth/v2/authorize?response_type=code&prompt=none
+        &client_id=...&redirect_uri=...&code_challenge=...&scope=openid+profile+email"
+
+3. iframe → Nginx → Zitadel: запрос авторизации с prompt=none
+   (prompt=none = не показывать UI, использовать существующую сессию)
+
+4. Zitadel: сессия активна → немедленный redirect на /callback?code=NEW_CODE
+   Zitadel: сессии нет → redirect с error=login_required
+
+5. iframe → React SPA (oidc-client-ts): сообщение через postMessage с NEW_CODE
+
+6. React SPA (oidc-client-ts) → Nginx → Zitadel:
+   POST /auth/oauth/v2/token
+   Body: grant_type=authorization_code, code=NEW_CODE, code_verifier (PKCE)
+
+7. Zitadel → React SPA: { access_token (новый JWT), refresh_token, id_token }
+8. React SPA: заменяет access_token в памяти, удаляет iframe
+   Все следующие API-запросы используют новый токен - пользователь ничего не замечает
+
+Если Zitadel вернул error=login_required:
+9. React SPA: redirect пользователя на Flow 1 (полный логин)
+```
+
+### Flow 16: Демонстрация Deadline (504)
+
+```
+Сценарий: Messaging Service медленно отвечает Guild Service при удалении сообщения.
+
+1. React SPA → Nginx → Messaging Service: DELETE /api/messages/{id} + JWT
+   Messaging Service: устанавливает X-Deadline = NOW() + 5 сек
+
+2. Messaging Service → Guild Service (HTTP, Polly: CB + Deadline):
+   GET /internal/channels/{channelId}/check-access?userId=X
+   Headers: X-Deadline = <UTC timestamp>
+
+3. Guild Service: DeadlineMiddleware проверяет X-Deadline
+   Если дедлайн НЕ истёк → обрабатывает запрос нормально
+
+4. [Сценарий: Guild Service отвечает очень медленно (DB lock, GC pause и т.п.)]
+   CancellationToken, привязанный к X-Deadline, срабатывает
+
+5. Guild Service → Messaging Service: 504 Gateway Timeout
+   (или: Messaging Service сам обрывает запрос по CancellationToken до ответа)
+
+6. Messaging Service → Nginx → React SPA: 504 Gateway Timeout
+   Body: { error: "Request timeout", retryAfter: 5 }
+
+7. React SPA: показывает пользователю "Не удалось выполнить действие. Попробуйте снова."
+   (в отличие от Circuit Breaker - это разовый сбой, не накопительный)
+```
+
+### Flow 17: Создание канала
+
+```
+1. Owner/Admin → React SPA: "+" рядом с разделом каналов → ввод названия → выбор типа → "Создать"
+2. React SPA → Nginx: POST /api/guilds/{guildId}/channels + JWT
+   Body: { name: "новости", type: "text" }   (или type: "voice")
+
+3. Nginx: rate limit, X-Request-Id → Proxy к Guild Service
+
+4. Guild Service: Валидация JWT → callerId
+5. Guild Service → PostgreSQL:
+   SELECT member WHERE user_id=callerId AND guild_id={guildId}
+   Проверка роли: Owner или Admin → разрешено, Member → 403 Forbidden
+
+6. Guild Service → PostgreSQL:
+   INSERT INTO channels (id, guild_id, name, type)
+   type = 'text' | 'voice'
+
+7. Guild Service → WS Gateway (HTTP):
+   POST /internal/broadcast { type: 'channel.created', guildId, channel: { id, name, type } }
+8. WS Gateway → React SPA (участники гильда, SignalR):
+   { type: 'channel.created', channel: { id, name, type } }
+   (UI добавляет канал в список без перезагрузки)
+
+9. Guild Service → Nginx → React SPA: 201 Created { id, name, type, guildId }
+```
+
+### Flow 18: Удаление канала
+
+```
+1. Owner/Admin → React SPA: ПКМ на канале → "Удалить канал" → подтверждение
+2. React SPA → Nginx: DELETE /api/guilds/{guildId}/channels/{channelId} + JWT
+
+3. Nginx → Guild Service: Proxy DELETE /api/guilds/{guildId}/channels/{channelId}
+
+4. Guild Service: Валидация JWT → callerId
+5. Guild Service → PostgreSQL:
+   SELECT member WHERE user_id=callerId AND guild_id={guildId}
+   Проверка роли: Owner или Admin → разрешено, Member → 403 Forbidden
+
+6. [Если удаляется голосовой канал]
+   Guild Service → Voice Service (HTTP):
+   DELETE /internal/voice/channel/{channelId}/disconnect-all
+   Voice Service → LiveKit HTTP API: DeleteRoom(name=channelId)
+   Voice Service → SessionStore: удалить все сессии channelId
+
+7. Guild Service → PostgreSQL:
+   DELETE FROM channels WHERE id={channelId} AND guild_id={guildId}
+   (сообщения канала остаются в messages - CASCADE не настроен в MVP)
+
+8. Guild Service → WS Gateway (HTTP):
+   POST /internal/broadcast { type: 'channel.deleted', guildId, channelId }
+9. WS Gateway → React SPA (участники гильда, SignalR):
+   { type: 'channel.deleted', channelId }
+   (UI убирает канал из списка; если пользователь был в этом канале - переводит на general)
+
+10. Guild Service → Nginx → React SPA: 204 No Content
+```
+
+### Flow 19: Удаление сервера
+
+```
+1. Owner → React SPA: Настройки → "Удалить сервер" → подтверждение (введи название сервера)
+2. React SPA → Nginx: DELETE /api/guilds/{guildId} + JWT
+
+3. Nginx → Guild Service: Proxy DELETE /api/guilds/{guildId}
+
+4. Guild Service: Валидация JWT → callerId
+5. Guild Service → PostgreSQL:
+   SELECT member WHERE user_id=callerId AND guild_id={guildId}
+   Проверка: callerRole == 'Owner' → разрешено, любая другая роль → 403 Forbidden
+
+6. Guild Service → PostgreSQL:
+   SELECT channels WHERE guild_id={guildId} AND type='voice'
+   Для каждого голосового канала:
+   Guild Service → Voice Service (HTTP):
+   DELETE /internal/voice/channel/{channelId}/disconnect-all
+   Voice Service → LiveKit HTTP API: DeleteRoom(name=channelId)
+   Voice Service → SessionStore: удалить все сессии channelId
+
+7. Guild Service → PostgreSQL:
+   BEGIN
+     DELETE FROM members WHERE guild_id={guildId}
+     DELETE FROM channels WHERE guild_id={guildId}
+     DELETE FROM invites WHERE guild_id={guildId}
+     DELETE FROM bans WHERE guild_id={guildId}
+     DELETE FROM guilds WHERE id={guildId}
+   COMMIT
+
+8. Guild Service → WS Gateway (HTTP):
+   POST /internal/broadcast { type: 'guild.deleted', guildId }
+9. WS Gateway → React SPA (все участники гильда, SignalR):
+   { type: 'guild.deleted', guildId }
+   (UI убирает сервер из панели, переводит пользователей на главный экран)
+
+10. Guild Service → Nginx → React SPA: 204 No Content
 ```
