@@ -195,7 +195,7 @@
 
 | # | Задача | Часы | Результат | Зависит от |
 |:--|:--|:--|:--|:--|
-| Б1-24 | minikube setup: `minikube start`, `minikube addons enable ingress` | 1 | minikube работает с Nginx Ingress Controller | - |
+| Б1-24 | k3s setup: установка k3s (`curl -sfL https://get.k3s.io | sh -`), отключение Traefik (`--disable=traefik`), установка Nginx Ingress Controller через манифест | 2 | k3s работает, `kubectl get nodes` → Ready, Nginx Ingress Controller задеплоен | - |
 | Б1-25 | k8s-манифесты: Deployment + Service для Guild, Messaging, Voice, WS Gateway | 5 | `kubectl apply -f k8s/` → 4 сервисных пода запущены | Б1-24 |
 | Б1-26 | k8s-манифесты: PostgreSQL StatefulSet + PersistentVolumeClaim | 3 | PostgreSQL в k8s с persistent storage | Б1-24 |
 | Б1-27 | k8s-манифесты: Zitadel Deployment + Service | 2 | Zitadel в k8s, Application перенастроен | Б1-26 |
@@ -270,7 +270,7 @@
 
 --- Неделя 4 ---
 
-Б1-24 (minikube)
+Б1-24 (k3s)
   ├── Б1-25 (k8s Deployments) ──→ Б1-29 (Ingress) ──→ Б1-33 (smoke test)
   ├── Б1-26 (PG StatefulSet)
   ├── Б1-27 (Zitadel k8s)
@@ -349,7 +349,7 @@
 | ❌ Redis | In-memory достаточно для демо (1 instance). Redis - лишняя сложность |
 | ❌ gRPC | HTTP проще отлаживать, Polly работает из коробки |
 | ❌ RabbitMQ / Kafka | Outbox + HTTP заменяют broker для наших объемов |
-| ❌ Service mesh (Istio) | Слишком тяжелый для minikube + 4 человека |
+| ❌ Service mesh (Istio) | Слишком тяжелый для k3s single-node + 4 человека |
 | ❌ E2EE реализация | Только в архитектуре и презентации, не в коде |
 | ❌ Мобильный адаптив | Desktop only, CSS Grid без media queries |
 | ❌ Полный CI/CD с деплоем | Только GitHub Actions: build + test на PR |
