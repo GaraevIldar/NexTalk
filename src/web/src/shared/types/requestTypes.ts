@@ -4,8 +4,7 @@ export interface Guild {
     description?: string
     icon?: string
     ownerId: string
-    createdAt: Date
-    updatedAt: Date
+    createdAt: string
     memberCount: number
 }
 

@@ -16,10 +16,40 @@ const initialState: ServerState = {
     error: null,
 }
 
+const USE_MOCK = import.meta.env.VITE_USE_AUTH_MOCK === 'true'
+
+const mockServers: Guild[] = [
+    {
+        ownerId: '1',
+        id: '1',
+        name: 'Mock Server 1',
+        icon: 'game',
+        memberCount: 5,
+        description: 'Тестовый сервер',
+        createdAt: new Date().toISOString(),
+    },
+    {
+        ownerId: '2',
+        id: '2',
+        name: 'Mock Server 2',
+        icon: 'dev',
+        memberCount: 12,
+        description: 'Разработка',
+        createdAt: new Date().toISOString(),
+    },
+]
+
 // Асинхронный thunk для загрузки серверов
 export const fetchServers = createAsyncThunk(
     'servers/fetchServers',
     async () => {
+        if (USE_MOCK) {
+            await new Promise(res => setTimeout(res, 300))
+
+            // КЛЮЧЕВО: возвращаем копию, не оригинал
+            return [...mockServers]
+        }
+
         const response = await getUserGuilds()
         return response
     }
@@ -39,6 +69,10 @@ const serverSlice = createSlice({
         },
         addServer: (state, action: PayloadAction<Guild>) => {
             state.servers.push(action.payload)
+
+            if (USE_MOCK) {
+                mockServers.push(action.payload)
+            }
         },
         removeServer: (state, action: PayloadAction<string>) => {
             state.servers = state.servers.filter(s => s.id !== action.payload)

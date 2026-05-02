@@ -1,22 +1,54 @@
-import React, { useState } from 'react'
-import { login, selectIsLoading, selectAuthError } from '../stores/authSlice'
+import React, {useEffect, useState} from 'react'
+import {login, selectIsLoading, selectAuthError, selectIsAuthenticated} from '../stores/authSlice'
 import { GradientBackground } from '../../../shared/components/GradientBackground/GradientBackground'
 import { AuthCard } from '../components/AuthCard'
 import styles from './AuthPage.module.scss'
 import {useAppDispatch, useAppSelector} from "../../../store.ts";
+import {useNavigate} from "react-router-dom";
 
 export const AuthPage: React.FC = () => {
     const dispatch = useAppDispatch()
     const isLoading = useAppSelector(selectIsLoading)
     const error = useAppSelector(selectAuthError)
     const [isLogin, setIsLogin] = useState(true)
-    const [demoMode, setDemoMode] = useState(false)
+    const navigate = useNavigate()
+    const isAuthenticated = useAppSelector(selectIsAuthenticated)
 
-    const handleLogin = async () => {
-        await dispatch(login())
+    useEffect(() => {
+        if (isAuthenticated) {
+            navigate('/servers')
+        }
+    }, [isAuthenticated])
+
+    const handleLogin = async (email: string, password: string) => {
+        // 🟢 MOCK
+        // login() возвращает пользователя → делаем navigate('/servers')
+        //
+        // 🔵 REAL (OIDC)
+        // login() делает redirect → navigate не нужен
+        //
+        // 👉 поэтому проверка if (result) — это как раз фильтр:
+        // mock → есть result → редирект
+        // oidc → null → редиректа нет
+
+        try {
+            const result = await dispatch(login()).unwrap()
+
+            if (result) {
+                navigate('/servers')
+            }
+
+        } catch (e) {
+            console.error('Login failed', e)
+        }
     }
 
     const handleRegister = async () => {
+        if (import.meta.env.VITE_USE_AUTH_MOCK === 'true') {
+            await dispatch(login()) // просто логиним
+            return
+        }
+
         // Реальный OIDC flow с параметром prompt=create
         const authUrl = new URL(import.meta.env.VITE_OIDC_AUTHORITY + '/oauth/v2/authorize')
         authUrl.searchParams.set('client_id', import.meta.env.VITE_OIDC_CLIENT_ID)
@@ -33,9 +65,6 @@ export const AuthPage: React.FC = () => {
         setIsLogin(!isLogin)
     }
 
-    const toggleDemoMode = () => {
-        setDemoMode(!demoMode)
-    }
 
     return (
         <GradientBackground>
@@ -48,13 +77,6 @@ export const AuthPage: React.FC = () => {
                     isLoading={isLoading}
                     error={error || undefined}
                 />
-
-                {/* Кнопка для переключения демо-режима (только для разработки) */}
-                {import.meta.env.DEV && (
-                    <button onClick={toggleDemoMode} className={styles.demoToggle}>
-                        {demoMode ? 'Режим: ДЕМО' : 'Режим: OIDC'}
-                    </button>
-                )}
             </div>
         </GradientBackground>
     )

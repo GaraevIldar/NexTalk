@@ -1,8 +1,7 @@
-// guilds/pages/ServersPage.tsx
 import React, { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { fetchServers, selectServers, selectServersLoading, setCurrentServer } from '../stores/serverSlice'
-import { selectUser } from '../../auth/stores/authSlice'
+import {selectIsAuthenticated, selectUser} from '../../auth/stores/authSlice'
 import { ServerCard } from '../components/ServerCard'
 import { GradientBackground } from '../../../shared/components/GradientBackground/GradientBackground'
 import styles from './ServersPage.module.scss'
@@ -15,6 +14,14 @@ export const ServersPage: React.FC = () => {
     const user = useAppSelector(selectUser)
     const servers = useAppSelector(selectServers)
     const isLoading = useAppSelector(selectServersLoading)
+
+    const isAuthenticated = useAppSelector(selectIsAuthenticated)
+
+    useEffect(() => {
+        if (!isAuthenticated) {
+            navigate('/auth')
+        }
+    }, [isAuthenticated])
 
     useEffect(() => {
         dispatch(fetchServers())

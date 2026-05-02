@@ -10,22 +10,11 @@ interface ServerCardProps {
 export const ServerCard: React.FC<ServerCardProps> = ({ server, onClick }) => {
     return (
         <div className={styles.card} onClick={onClick}>
-            <div className={styles.icon}>
-                {server.icon ? (
-                    <img src={server.icon} alt={server.name} />
-                ) : (
-                    <div className={styles.placeholder}>
-                        {server.name.charAt(0).toUpperCase()}
-                    </div>
-                )}
+            <div>{server.name}</div>
+            <div className={styles.stats}>
+                <span>5 каналов</span>
+                <span>{server.memberCount} участников</span>
             </div>
-            <div className={styles.name}>{server.name}</div>
-            <div className={styles.members}>
-                👥 {server.memberCount || 0} участников
-            </div>
-            {server.description && (
-                <div className={styles.description}>{server.description}</div>
-            )}
         </div>
     )
 }

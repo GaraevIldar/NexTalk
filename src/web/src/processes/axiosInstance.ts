@@ -1,22 +1,30 @@
-import axios from 'axios';
-import {logout, refreshToken, selectAccessToken} from "../modules/auth/stores/authSlice.ts";
-import {store} from "../store.ts";
+import axios from 'axios'
+import { logout, refreshToken, selectAccessToken } from "../modules/auth/stores/authSlice.ts"
 
+// 👇 вместо прямого импорта store
+let _store: any = null
+
+export const injectStore = (store: any) => {
+    _store = store
+}
 
 export const axiosInstance = axios.create({
     baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000',
     headers: {
         'Content-Type': 'application/json',
     },
-});
+})
 
+// ===== REQUEST =====
 axiosInstance.interceptors.request.use(
     async (config) => {
-        const state = store.getState()
-        const token = selectAccessToken(state)
+        if (_store) {
+            const state = _store.getState()
+            const token = selectAccessToken(state)
 
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`
+            if (token) {
+                config.headers.Authorization = `Bearer ${token}`
+            }
         }
 
         return config
@@ -24,27 +32,23 @@ axiosInstance.interceptors.request.use(
     (error) => Promise.reject(error)
 )
 
-// Интерцептор для обработки 401
+// ===== RESPONSE =====
 axiosInstance.interceptors.response.use(
     (response) => response,
     async (error) => {
         const originalRequest = error.config
 
-        if (error.response?.status === 401 && !originalRequest._retry) {
+        if (error.response?.status === 401 && !originalRequest._retry && _store) {
             originalRequest._retry = true
 
             try {
-                // Диспатчим refreshToken и ждем результата
-                const result = await store.dispatch(refreshToken()).unwrap()
+                const result = await _store.dispatch(refreshToken()).unwrap()
 
-                // Обновляем заголовок
                 originalRequest.headers.Authorization = `Bearer ${result?.access_token}`
 
-                // Повторяем запрос
                 return axiosInstance(originalRequest)
             } catch (refreshError) {
-                // Если не удалось обновить - выходим
-                store.dispatch(logout())
+                _store.dispatch(logout())
                 window.location.href = '/auth'
                 return Promise.reject(refreshError)
             }

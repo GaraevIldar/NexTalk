@@ -3,7 +3,7 @@ import {oidcService} from "../oidc/oidcService.ts";
 
 export interface User {
     id: string
-    username: string      // для @упоминаний, уникальный
+    username: string
     email: string
     displayName?: string
     avatar?: string
@@ -38,11 +38,29 @@ const initialState: AuthState = {
 export const login = createAsyncThunk(
     'auth/login',
     async (_, { dispatch }) => {
-        // Сохраняем текущий URL для возврата
+        if (import.meta.env.VITE_USE_AUTH_MOCK === 'true') {
+            // 👇 имитация запроса
+            await new Promise(res => setTimeout(res, 500))
+
+            return {
+                user: {
+                    id: 'mock-id',
+                    username: 'mockuser',
+                    email: 'mock@example.com',
+                    displayName: 'Mock User',
+                    avatar: '',
+                    emailVerified: true,
+                },
+                tokens: {
+                    access_token: 'mock-token',
+                    expires_in: 3600,
+                },
+            }
+        }
+
+        // 👉 реальный код
         sessionStorage.setItem('return_url', window.location.pathname)
-        // Редирект на Zitadel
         await oidcService.login()
-        // Возвращаем пустой результат, так как редирект произойдет
         return null
     }
 )
@@ -51,6 +69,10 @@ export const login = createAsyncThunk(
 export const logout = createAsyncThunk(
     'auth/logout',
     async () => {
+        if (import.meta.env.VITE_USE_AUTH_MOCK === 'true') {
+            return null
+        }
+
         await oidcService.logout()
         return null
     }
@@ -60,6 +82,21 @@ export const logout = createAsyncThunk(
 export const initializeAuth = createAsyncThunk(
     'auth/initialize',
     async () => {
+        if (import.meta.env.VITE_USE_AUTH_MOCK === 'true') {
+            return {
+                user: {
+                    id: 'mock-id',
+                    username: 'mockuser',
+                    email: 'mock@example.com',
+                    displayName: 'Mock User',
+                },
+                tokens: {
+                    access_token: 'mock-token',
+                    expires_in: 3600,
+                },
+                isAuthenticated: true,
+            }
+        }
         const isAuthenticated = oidcService.isAuthenticated()
         const userInfo = oidcService.getUserInfo()
         const accessToken = oidcService.getAccessToken()
@@ -166,9 +203,14 @@ const authSlice = createSlice({
             state.isLoading = true
             state.error = null
         })
-        builder.addCase(login.fulfilled, (state) => {
+        builder.addCase(login.fulfilled, (state, action) => {
             state.isLoading = false
-            // Редирект уже произошел
+
+            if (action.payload) {
+                state.user = action.payload.user
+                state.tokens = action.payload.tokens
+                state.isAuthenticated = true
+            }
         })
         builder.addCase(login.rejected, (state, action) => {
             state.isLoading = false

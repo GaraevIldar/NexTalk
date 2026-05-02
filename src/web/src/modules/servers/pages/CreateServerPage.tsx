@@ -1,11 +1,13 @@
 ﻿import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useServerStore } from '../stores/serverStore'
 import { Button } from '../../../shared/components/Button/Button'
 import { Input } from '../../../shared/components/Input/Input'
 import { GradientBackground } from '../../../shared/components/GradientBackground/GradientBackground'
 import { Icon } from '../../../shared/components/Icon/Icon'
 import styles from './CreateServerPage.module.scss'
+import {createGuild} from "../../../processes/guild/createGuild.ts";
+import {addServer} from "../stores/serverSlice.ts";
+import {useAppDispatch, useAppSelector} from "../../../store.ts";
 
 const SERVER_TYPES = [
   { id: 'game', name: 'Игровой', iconName: 'server-game' },
@@ -18,17 +20,49 @@ const SERVER_TYPES = [
 
 export const CreateServerPage: React.FC = () => {
   const navigate = useNavigate()
-  const { createServer } = useServerStore()
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [selectedType, setSelectedType] = useState('game')
   const [loading, setLoading] = useState(false)
+  const dispatch = useAppDispatch()
+  const user = useAppSelector(state => state.auth.user)
+
+  const USE_MOCK = import.meta.env.VITE_USE_AUTH_MOCK === 'true'
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!name.trim()) return
+
     setLoading(true)
-    await createServer(name, selectedType, description)
+
+    if (USE_MOCK) {
+      await new Promise(res => setTimeout(res, 300))
+
+      const newServer = {
+        id: Date.now().toString(),
+        ownerId: user.id,
+        name,
+        description,
+        icon: selectedType,
+        memberCount: 1,
+        createdAt: Date.now().toString(),
+      }
+
+      dispatch(addServer(newServer))
+
+      setLoading(false)
+      navigate('/servers')
+      return
+    }
+
+    const data = {
+      name,
+      description,
+      icon: selectedType
+    }
+
+    await createGuild(data)
+
     setLoading(false)
     navigate('/servers')
   }
@@ -77,12 +111,6 @@ export const CreateServerPage: React.FC = () => {
                   onChange={(e) => setDescription(e.target.value)}
                   className={styles.input}
               />
-
-              <div className={styles.recommended}>
-                <div className={styles.recommendedTitle}>Рекомендуемые каналы</div>
-                <div className={styles.recommendedChannels}>#общий · голосовой</div>
-                <div className={styles.recommendedNote}>Можно добавить позже</div>
-              </div>
 
               <div className={styles.buttons}>
                 <Button type="button" variant="secondary" onClick={() => navigate('/servers')} fullWidth>
