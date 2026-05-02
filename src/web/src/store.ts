@@ -2,11 +2,15 @@ import { configureStore } from '@reduxjs/toolkit'
 import { useDispatch, useSelector, TypedUseSelectorHook } from 'react-redux'
 import authReducer from './modules/auth/stores/authSlice'
 import serverReducer from './modules/servers/stores/serverSlice'
+import channelReducer from './modules/channels/stores/channelSlice'
+import chatReducer from './modules/chat/stores/chatSlice'
 
 export const store = configureStore({
     reducer: {
         auth: authReducer,
         servers: serverReducer,
+        channels: channelReducer,
+        chat: chatReducer,
     },
     middleware: (getDefaultMiddleware) =>
         getDefaultMiddleware({

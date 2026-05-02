@@ -1,75 +1,52 @@
-﻿import React, { useState } from 'react'
+﻿import React, { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ServerSidebar } from '../../../shared/components/Layout/ServerSidebar'
 import { ChannelSidebar } from '../../channels/components/ChannelSidebar'
 import { VoiceControls } from '../components/VoiceControls'
 import { VoiceParticipantList } from '../components/VoiceParticipantList'
 import styles from './VoiceChannelPage.module.scss'
-import {VoiceParticipantProps} from "../components/VoiceParticipant.tsx";
-import {useAppSelector} from "../../../store.ts";
-import {selectUser} from "../../auth/stores/authSlice.ts";
-
-const mockParticipants: VoiceParticipantProps[] = [
-  { id: '1', name: 'Алексей', avatar: 'А', isSpeaking: true, isMuted: false, isDeafened: false, volume: 75 },
-  { id: '2', name: 'Мария', avatar: 'М', isSpeaking: false, isMuted: false, isDeafened: false, volume: 45 },
-  { id: '3', name: 'Дмитрий', avatar: 'Д', isSpeaking: false, isMuted: true, isDeafened: false, volume: 0 },
-  { id: '4', name: 'Яна', avatar: 'Я', isSpeaking: false, isMuted: false, isDeafened: true, volume: 30 },
-]
+import { useAppSelector } from "../../../store.ts"
+import { selectUser } from "../../auth/stores/authSlice.ts"
+import {useVoice} from "../../../shared/hooks/useVoice.ts";
 
 export const VoiceChannelPage: React.FC = () => {
   const navigate = useNavigate()
-  const { serverId } = useParams()
+  const { serverId, channelId } = useParams()
   const user = useAppSelector(selectUser)
+  const voice = useVoice()
 
-  const [isMuted, setIsMuted] = useState(false)
   const [isDeafened, setIsDeafened] = useState(false)
-  const [isConnected, setIsConnected] = useState(true)
-  const [volume, setVolume] = useState(75)
-  const [participants, setParticipants] = useState(mockParticipants)
 
-  const handleToggleMute = () => {
-    setIsMuted(!isMuted)
-    setParticipants(prev => prev.map(p =>
-        p.id === user?.id ? { ...p, isMuted: !isMuted } : p
-    ))
-  }
+  useEffect(() => {
+    if (!channelId || !user) return
 
-  const handleToggleDeafen = () => {
-    setIsDeafened(!isDeafened)
-  }
+    voice.joinVoice(channelId, user.username)
+
+    return () => {
+      voice.leaveVoice(channelId)
+    }
+  }, [channelId, user])
 
   const handleDisconnect = () => {
-    setIsConnected(false)
-    navigate(`/servers/${serverId}/channels/general`)
-  }
-
-  const handleMuteUser = (userId: string) => {
-    setParticipants(prev => prev.map(p =>
-        p.id === userId ? { ...p, isMuted: !p.isMuted } : p
-    ))
-  }
-
-  const handleKickUser = (userId: string) => {
-    if (window.confirm('Исключить участника из голосового канала?')) {
-      setParticipants(prev => prev.filter(p => p.id !== userId))
+    if (channelId) {
+      voice.leaveVoice(channelId)
     }
+    navigate(`/servers/${serverId}/channels/general`)
   }
 
   const participantsWithCurrent = user
       ? [
-        ...participants,
+        ...voice.participants,
         {
           id: user.id,
           name: user.username,
-          avatar: user.username.charAt(0).toUpperCase(),
+          avatar: user.username[0].toUpperCase(),
           isSpeaking: false,
-          isMuted,
-          isDeafened,
+          isMuted: voice.isMuted,
           isCurrentUser: true,
-          volume: volume,
-        } as VoiceParticipantProps,
+        },
       ]
-      : participants
+      : voice.participants
 
   return (
       <div className={styles.layout}>
@@ -78,30 +55,24 @@ export const VoiceChannelPage: React.FC = () => {
 
         <div className={styles.voiceArea}>
           <div className={styles.header}>
-            <div className={styles.title}>General Voice</div>
+            <div className={styles.title}>Voice Channel</div>
           </div>
 
           <div className={styles.content}>
-            <div className={styles.participantsSection}>
-              <VoiceParticipantList
-                  participants={participantsWithCurrent}
-                  currentUserId={user?.id}
-                  onMuteUser={handleMuteUser}
-                  onKickUser={handleKickUser}
-              />
-            </div>
+            <VoiceParticipantList
+                participants={participantsWithCurrent}
+                currentUserId={user?.id}
+            />
           </div>
 
           <div className={styles.controlsSection}>
             <VoiceControls
-                isMuted={isMuted}
+                isMuted={voice.isMuted}
                 isDeafened={isDeafened}
-                isConnected={isConnected}
-                onToggleMute={handleToggleMute}
-                onToggleDeafen={handleToggleDeafen}
+                isConnected={voice.isConnected}
+                onToggleMute={voice.toggleMic}
+                onToggleDeafen={() => setIsDeafened(prev => !prev)}
                 onDisconnect={handleDisconnect}
-                volume={volume}
-                onVolumeChange={setVolume}
             />
           </div>
         </div>

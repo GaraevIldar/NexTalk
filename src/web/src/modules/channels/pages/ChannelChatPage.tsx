@@ -1,7 +1,5 @@
 import React, { useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { useChatStore } from '../../chat/stores/chatStore'
-import { useChannelStore } from '../stores/channelStore'
 import { MessageList } from '../../chat/components/MessageList'
 import { MessageInput } from '../../chat/components/MessageInput'
 import { ServerSidebar } from '../../../shared/components/Layout/ServerSidebar'
@@ -10,28 +8,41 @@ import { MembersSidebar } from '../../../shared/components/Layout/MembersSidebar
 import { Button } from '../../../shared/components/Button/Button'
 import { Icon } from '../../../shared/components/Icon/Icon'
 import styles from './ChannelChatPage.module.scss'
-import {useAppSelector} from "../../../store.ts";
+import {useAppDispatch, useAppSelector} from "../../../store.ts";
 import {selectUser} from "../../auth/stores/authSlice.ts";
+import {fetchChannels} from "../stores/channelSlice.ts";
+import {fetchMessages, sendMessageLocal} from "../../chat/stores/chatSlice.ts";
 
 export const ChannelChatPage: React.FC = () => {
     const { serverId, channelId } = useParams()
     const navigate = useNavigate()
     const user = useAppSelector(selectUser)
-    const { messages, sendMessage } = useChatStore()
-    const { channels, fetchChannels } = useChannelStore()
+    const dispatch = useAppDispatch()
+    const channels = useAppSelector(state => state.channels.channels)
+    const messages = useAppSelector(state => state.chat.messages)
 
     useEffect(() => {
-        if (serverId) {
-            fetchChannels(serverId)
-        }
-    }, [serverId, fetchChannels])
+        if (serverId) dispatch(fetchChannels(serverId))
+    }, [serverId])
+
+    useEffect(() => {
+        if (channelId) dispatch(fetchMessages(channelId))
+    }, [channelId])
 
     const currentMessages = messages[channelId || ''] || []
     const currentChannel = channels.find(c => c.id === channelId)
 
     const handleSend = (text: string) => {
         if (!user || !channelId) return
-        sendMessage(channelId, text, user.id, user.username)
+
+        dispatch(sendMessageLocal({
+            id: Date.now().toString(),
+            channelId,
+            authorId: user.id,
+            authorName: user.username,
+            content: text,
+            createdAt: new Date().toISOString()
+        }))
     }
 
     const handleInvite = () => {

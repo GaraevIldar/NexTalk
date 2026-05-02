@@ -19,12 +19,10 @@ export interface Channel {
 
 export interface Member {
     id: string
-    guildId: string
     userId: string
-    username: string      // для @упоминаний, уникальный
-    displayName: string    // отображаемое имя
+    username: string
+    name: string
     role: 'owner' | 'admin' | 'moderator' | 'member'
-    joinedAt: Date
     avatar?: string
 }
 

@@ -73,11 +73,9 @@ export const ServersPage: React.FC = () => {
                 </div>
 
                 <div className={styles.serversCount}>
-                    {servers.length === 0 ? (
+                    {servers.length === 0 && (
                         <p>У вас пока нет серверов. Создайте свой первый сервер!</p>
-                    ) : (
-                        <p>Ваши серверы ({servers.length})</p>
-                    )}
+                    ) }
                 </div>
 
                 <div className={styles.grid}>
