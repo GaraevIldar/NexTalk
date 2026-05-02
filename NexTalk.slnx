@@ -14,6 +14,7 @@
     <Project Path="src/voice-service/NexTalk.Voice.Service/NexTalk.Voice.Service.csproj" />
   </Folder>
   <Folder Name="/Solution Items/">
+    <File Path=".env.example" />
     <File Path="docker-compose.yaml" />
     <File Path="src/guild-service/Dockerfile" />
     <File Path="src/messaging-service/Dockerfile" />

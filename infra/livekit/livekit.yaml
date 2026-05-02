@@ -1,0 +1,24 @@
+# LiveKit не поддерживает подстановку env в YAML-конфиге.
+# Значения здесь должны совпадать с LIVEKIT_API_KEY и LIVEKIT_SECRET_KEY из .env.
+# Для дев-окружения значения devkey/devsecret достаточны; на продакшне заменить сильными ключами.
+port: 7880
+log_level: info
+
+rtc:
+  tcp_port: 7881
+  port_range_start: 50000
+  port_range_end: 50200
+  use_external_ip: false
+  node_ip: 0.0.0.0
+
+redis:
+  address: redis:6379
+
+keys:
+  devkey: devsecret
+
+room:
+  enabled: true
+  auto_create: true
+  max_duration: 14400
+  empty_timeout: 300

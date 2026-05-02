@@ -619,7 +619,9 @@ Polly Circuit Breaker на каждом `HttpClient`:
 
 > Каждый сервис подключается только к своей схеме (отдельный PG-пользователь). Нужны чужие данные → HTTP-вызов к сервису-владельцу.
 
-### In-Memory (без Redis)
+### In-Memory (без Redis в NexTalk-сервисах)
+
+> **Redis в проекте есть**, но используется исключительно LiveKit для хранения состояния комнат (room registry, participant tracking). NexTalk-сервисы (Guild, Messaging, Voice, WS Gateway) Redis не используют - presence и rate limiting хранятся in-process.
 
 | Данные | Где | Зачем |
 |:--|:--|:--|
