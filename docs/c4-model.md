@@ -107,7 +107,7 @@
 | MessagingHttpClient | HTTP → Messaging Service (Polly: Retry + CB) |
 | GuildHttpClient | HTTP → Guild Service (Polly: Retry + CB) |
 | BroadcastController | POST /internal/broadcast (от Outbox Worker, Guild Service, Voice Service) |
-| DisconnectController | POST /internal/disconnect/{userId} — принудительное отключение |
+| DisconnectController | POST /internal/disconnect/{userId} - принудительное отключение |
 
 #### Guild Service
 
