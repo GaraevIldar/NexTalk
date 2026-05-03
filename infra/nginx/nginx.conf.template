@@ -113,13 +113,19 @@ http {
         location /ui/v2/login {
             limit_req zone=auth_limit burst=10 nodelay;
             proxy_pass http://zitadel-login;
+            proxy_set_header Host $host;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Request-Id $request_id;
             proxy_set_header X-Forwarded-Prefix /ui/v2/login;
         }
 
-        # Zitadel API
-        location /auth {
-            limit_req zone=auth_limit burst=10 nodelay;
-            proxy_pass http://zitadel-api;
+        # Zitadel API - все OIDC/OAuth2/Management эндпоинты.
+        # /auth/oauth/v2/token → /oauth/v2/token
+        location /auth/ {
+            limit_req zone=auth_limit burst=20 nodelay;
+            proxy_pass http://zitadel-api/;
 
             proxy_connect_timeout 60s;
             proxy_send_timeout 60s;
@@ -127,6 +133,13 @@ http {
         }
 
         location /api/guilds {
+            limit_req zone=api_limit burst=50 nodelay;
+            proxy_pass http://guild-service;
+
+            add_header X-Upstream-Service "guild-service" always;
+        }
+
+        location /api/invites {
             limit_req zone=api_limit burst=50 nodelay;
             proxy_pass http://guild-service;
 
@@ -159,6 +172,11 @@ http {
 
             proxy_pass http://websocket-gateway;
             proxy_http_version 1.1;
+            proxy_set_header Host $host;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Request-Id $request_id;
             proxy_set_header Upgrade $http_upgrade;
             proxy_set_header Connection "upgrade";
 

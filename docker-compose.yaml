@@ -26,8 +26,9 @@ services:
         condition: service_started
     networks:
       - nextalk
+      - zitadel
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:80/health || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 3
@@ -45,6 +46,7 @@ services:
       ASPNETCORE_URLS: http://+:5001
       ConnectionStrings__PostgresConnection: ${NEXTALK_DATABASE_POSTGRES_DSN}
       Zitadel__Authority: ${ZITADEL_PUBLIC_SCHEME}://${ZITADEL_DOMAIN}:${ZITADEL_EXTERNALPORT}
+      Zitadel__MetadataAddress: http://zitadel-api:8080/.well-known/openid-configuration
       Services__WebSocketGateway: http://websocket-gateway:5004
       Services__VoiceService: http://voice-service:5003
       Logging__LogLevel__Default: Information
@@ -73,6 +75,7 @@ services:
       ASPNETCORE_URLS: http://+:5002
       ConnectionStrings__PostgresConnection: ${NEXTALK_DATABASE_POSTGRES_DSN}
       Zitadel__Authority: ${ZITADEL_PUBLIC_SCHEME}://${ZITADEL_DOMAIN}:${ZITADEL_EXTERNALPORT}
+      Zitadel__MetadataAddress: http://zitadel-api:8080/.well-known/openid-configuration
       Services__WebSocketGateway: http://websocket-gateway:5004
       Services__GuildService: http://guild-service:5001
       Logging__LogLevel__Default: Information
@@ -99,8 +102,8 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT}
       ASPNETCORE_URLS: http://+:5003
-      ConnectionStrings__PostgresConnection: ${NEXTALK_DATABASE_POSTGRES_DSN}
       Zitadel__Authority: ${ZITADEL_PUBLIC_SCHEME}://${ZITADEL_DOMAIN}:${ZITADEL_EXTERNALPORT}
+      Zitadel__MetadataAddress: http://zitadel-api:8080/.well-known/openid-configuration
       LiveKit__Host: http://livekit:7880
       LiveKit__ApiKey: ${LIVEKIT_API_KEY}
       LiveKit__SecretKey: ${LIVEKIT_SECRET_KEY}
@@ -109,9 +112,6 @@ services:
       Logging__LogLevel__Microsoft.AspNetCore: Warning
     networks:
       - nextalk
-    depends_on:
-      postgres:
-        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5003/health"]
       interval: 15s
@@ -129,8 +129,8 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT}
       ASPNETCORE_URLS: http://+:5004
-      ConnectionStrings__PostgresConnection: ${NEXTALK_DATABASE_POSTGRES_DSN}
       Zitadel__Authority: ${ZITADEL_PUBLIC_SCHEME}://${ZITADEL_DOMAIN}:${ZITADEL_EXTERNALPORT}
+      Zitadel__MetadataAddress: http://zitadel-api:8080/.well-known/openid-configuration
       Services__GuildService: http://guild-service:5001
       Services__MessagingService: http://messaging-service:5002
       Logging__LogLevel__Default: Information
@@ -139,9 +139,6 @@ services:
       Presence__OfflineTimeout: 30
     networks:
       - nextalk
-    depends_on:
-      postgres:
-        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5004/health"]
       interval: 15s
@@ -170,7 +167,7 @@ services:
       - zitadel
 
   redis:
-    image: redis:${REDIS-TAG}
+    image: redis:${REDIS_TAG}
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
@@ -211,12 +208,13 @@ services:
       - zitadel-bootstrap:/zitadel/bootstrap:rw
     networks:
       - zitadel
+      - nextalk
     depends_on:
       postgres:
         condition: service_healthy
 
   zitadel-login:
-    image: ghcr.io/zitadel/zitadel-login:${ZITADEL_VERSION}
+    image: ghcr.io/zitadel/zitadel-login:${ZITADEL_LOGIN_TAG}
     restart: unless-stopped
     user: "0"
     environment:
@@ -249,7 +247,7 @@ services:
       - ./infra/livekit/livekit.yaml:/etc/livekit.yaml:ro
     command: --config /etc/livekit.yaml
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:7880/"]
+      test: ["CMD-SHELL", "nc -z localhost 7880 || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
