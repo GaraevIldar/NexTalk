@@ -7,6 +7,7 @@
 
 | Вам нужно | Идите сюда |
 |:--|:--|
+| **Запустить проект** | [§0 Быстрый старт](#0-быстрый-старт) |
 | Понять, что это за проект | [§1 Проблема и идея](#1-проблема-и-идея) |
 | Увидеть, что входит в MVP | [§2 MVP](#2-mvp) |
 | Понять архитектуру (схемы) | [c4-model.md](docs/c4-model.md) |
@@ -23,6 +24,7 @@
 
 ## Содержание
 
+0. [Быстрый старт](#0-быстрый-старт)
 1. [Проблема и идея](#1-проблема-и-идея)
 2. [MVP](#2-mvp)
 3. [Эволюция архитектуры](#3-эволюция-архитектуры)
@@ -36,6 +38,92 @@
 11. [Фронтенд](#11-фронтенд)
 12. [За рамками MVP](#12-за-рамками-mvp)
 13. [Глоссарий](#13-глоссарий)
+
+---
+
+## 0. Быстрый старт
+
+### Требования
+
+| Инструмент | Версия | Зачем |
+|:--|:--|:--|
+| Docker | 24+ | Запуск всех сервисов |
+| Docker Compose | v2 (plugin) | Оркестрация контейнеров локально |
+| Git | любая | Клонирование репозитория |
+
+### Запуск
+
+```bash
+# 1. Клонировать репозиторий
+git clone <repo-url>
+cd NexTalk
+
+# 2. Скопировать конфиг
+cp .env.example .env
+
+# 3. Запустить все сервисы (дождётся healthy-статуса всех контейнеров)
+docker compose --env-file=.env up -d --wait
+```
+
+После успешного запуска будут доступны:
+
+| Адрес | Что там |
+|:--|:--|
+| http://localhost:8080 | Nginx — точка входа для всех запросов |
+| http://localhost:8080/auth | Zitadel — регистрация и логин |
+| http://localhost:8080/api/guilds | Guild Service (требует JWT) |
+| http://localhost:8080/api/channels | Messaging Service (требует JWT) |
+| http://localhost:8080/api/voice | Voice Service (требует JWT) |
+| http://localhost:8080/ws | WebSocket Gateway (SignalR) |
+| http://localhost:7880 | LiveKit SFU (WebRTC) |
+
+### Переменные окружения (`.env.example`)
+
+| Переменная | Дефолт | Описание |
+|:--|:--|:--|
+| `PROXY_HTTP_PUBLISHED_PORT` | `8080` | Порт Nginx на хосте |
+| `ASPNETCORE_ENVIRONMENT` | `Development` | Среда ASP.NET Core (`Development` / `Production`) |
+| `POSTGRES_DB` | `nextalk` | Название БД NexTalk |
+| `POSTGRES_USER` | `postgres` | Пользователь PostgreSQL |
+| `POSTGRES_PASSWORD` | `postgres` | Пароль PostgreSQL |
+| `NEXTALK_DATABASE_POSTGRES_DSN` | — | Connection string для .NET сервисов |
+| `ZITADEL_DATABASE_POSTGRES_DSN` | — | Connection string для Zitadel |
+| `ZITADEL_DOMAIN` | `localhost` | Домен Zitadel (должен совпадать с redirect_uri в OIDC-клиенте) |
+| `ZITADEL_EXTERNALPORT` | `8080` | Внешний порт Zitadel (совпадает с портом Nginx) |
+| `ZITADEL_MASTERKEY` | — | Ключ шифрования Zitadel, ровно 32 символа |
+| `LOGIN_CLIENT_PAT_EXPIRATION` | `2099-12-31T23:59:59Z` | Срок действия PAT для login-клиента |
+| `LIVEKIT_API_KEY` | `devkey` | API-ключ LiveKit (должен совпадать с `infra/livekit/livekit.yaml`) |
+| `LIVEKIT_SECRET_KEY` | `devsecret` | Secret LiveKit (должен совпадать с `infra/livekit/livekit.yaml`) |
+| `REDIS_TAG` | `8.6.2-alpine` | Версия образа Redis |
+
+> **Важно для продакшна:** смените `POSTGRES_PASSWORD`, `ZITADEL_MASTERKEY` (32 символа), `LIVEKIT_API_KEY` и `LIVEKIT_SECRET_KEY` на сильные значения.
+
+### Проверка работоспособности
+
+```bash
+# Убедиться, что все контейнеры healthy
+docker compose ps
+
+# Health-эндпоинты сервисов (liveness)
+curl http://localhost:8080/health           # Nginx upstream health
+curl http://localhost:5001/healthz          # Guild Service — liveness
+curl http://localhost:5002/readyz           # Messaging Service — readiness (+ PG)
+curl http://localhost:5003/healthz          # Voice Service — liveness
+curl http://localhost:5004/healthz          # WebSocket Gateway — liveness
+
+# Логи всех сервисов в JSON-формате
+docker compose logs guild-service | head -20
+```
+
+### Остановка
+
+```bash
+# Остановить контейнеры (данные сохраняются в volumes)
+docker compose down
+
+# Остановить и удалить все данные
+docker compose down -v
+```
 
 ---
 
