@@ -18,7 +18,5 @@ keys:
   devkey: devsecret
 
 room:
-  enabled: true
   auto_create: true
-  max_duration: 14400
   empty_timeout: 300
