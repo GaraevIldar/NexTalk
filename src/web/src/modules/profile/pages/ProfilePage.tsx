@@ -1,5 +1,4 @@
-﻿// profile/pages/ProfilePage.tsx
-import React from 'react'
+﻿import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { selectUser, logout } from '../../auth/stores/authSlice'
 import { GradientBackground } from '../../../shared/components/GradientBackground/GradientBackground'
@@ -14,21 +13,14 @@ export const ProfilePage: React.FC = () => {
 
     const handleLogout = async () => {
         await dispatch(logout())
-        window.location.href = '/auth'
+        navigate('/auth')
     }
 
     const handleEdit = () => {
         console.log('Edit profile')
-        // TODO: открыть модалку редактирования профиля
     }
 
-    // Форматирование даты создания аккаунта
     const formatCreatedAt = () => {
-        // Если есть реальная дата из JWT или API
-        if (user?.emailVerified) {
-            // Можно получить из токена или отдельного запроса
-            return new Date('2026-04-20')
-        }
         return new Date('2026-04-20')
     }
 
@@ -38,10 +30,8 @@ export const ProfilePage: React.FC = () => {
                 <ProfileCard
                     user={{
                         id: user?.id || '1',
-                        username: user?.username || 'User',
-                        email: user?.email || 'user@example.com',
-                        displayName: user?.displayName || user?.username || 'User',
-                        avatar: user?.avatar,
+                        name: user?.name || 'User',
+                        nickname: user?.nickname || 'user',
                         createdAt: formatCreatedAt(),
                         serversCount: 3, // TODO: получать из serverSlice
                         status: 'online', // TODO: получать из presence service

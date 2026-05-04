@@ -58,17 +58,13 @@ export const ServersPage: React.FC = () => {
             <div className={styles.container}>
                 <div className={styles.header}>
                     <div className={styles.welcome}>
-                        Добро пожаловать, {user?.displayName || user?.username || 'Гость'}!
+                        Добро пожаловать, {user?.name || 'Гость'}!
                     </div>
                     <div className={styles.userMenu} onClick={handleProfileClick}>
                         <div className={styles.avatar}>
-                            {user?.avatar ? (
-                                <img src={user.avatar} alt={user.username} />
-                            ) : (
-                                user?.username?.charAt(0).toUpperCase() || '?'
-                            )}
+                            {user?.name?.charAt(0).toUpperCase() || '?'}
                         </div>
-                        <span>{user?.username || 'Профиль'}</span>
+                        <span>{user?.name || 'Профиль'}</span>
                     </div>
                 </div>
 

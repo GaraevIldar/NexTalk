@@ -6,8 +6,8 @@ import { GradientBackground } from '../../../shared/components/GradientBackgroun
 import { Icon } from '../../../shared/components/Icon/Icon'
 import styles from './CreateServerPage.module.scss'
 import {createGuild} from "../../../processes/guild/createGuild.ts";
-import {addServer} from "../stores/serverSlice.ts";
-import {useAppDispatch, useAppSelector} from "../../../store.ts";
+import {createServer} from "../stores/serverSlice.ts";
+import {useAppDispatch} from "../../../store.ts";
 
 const SERVER_TYPES = [
   { id: 'game', name: 'Игровой', iconName: 'server-game' },
@@ -25,7 +25,6 @@ export const CreateServerPage: React.FC = () => {
   const [selectedType, setSelectedType] = useState('game')
   const [loading, setLoading] = useState(false)
   const dispatch = useAppDispatch()
-  const user = useAppSelector(state => state.auth.user)
 
   const USE_MOCK = import.meta.env.VITE_USE_AUTH_MOCK === 'true'
 
@@ -39,16 +38,12 @@ export const CreateServerPage: React.FC = () => {
       await new Promise(res => setTimeout(res, 300))
 
       const newServer = {
-        id: Date.now().toString(),
-        ownerId: user.id,
         name,
         description,
         icon: selectedType,
-        memberCount: 1,
-        createdAt: Date.now().toString(),
       }
 
-      dispatch(addServer(newServer))
+      dispatch(createServer(newServer))
 
       setLoading(false)
       navigate('/servers')

@@ -10,11 +10,10 @@ export interface Tokens {
 }
 
 export interface UserInfo {
-    sub: string           // User ID
+    sub: string
     email: string
-    email_verified: boolean
-    preferred_username: string  // username для @упоминаний
-    name: string          // display name
+    preferred_username: string
+    name: string
     picture?: string
     given_name?: string
     family_name?: string

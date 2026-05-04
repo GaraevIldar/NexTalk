@@ -1,6 +1,7 @@
-import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit'
-import {Guild} from "../../../shared/types/requestTypes.ts";
+import {createAsyncThunk, createSlice, PayloadAction} from '@reduxjs/toolkit'
+import {CreateGuildRequest, Guild} from "../../../shared/types/requestTypes.ts";
 import {getUserGuilds} from "../../../processes/guild/getUserGuilds.ts";
+import {createGuild} from "../../../processes/guild/createGuild.ts";
 
 interface ServerState {
     servers: Guild[]
@@ -39,19 +40,40 @@ const mockServers: Guild[] = [
     },
 ]
 
-// Асинхронный thunk для загрузки серверов
 export const fetchServers = createAsyncThunk(
     'servers/fetchServers',
     async () => {
         if (USE_MOCK) {
             await new Promise(res => setTimeout(res, 300))
 
-            // КЛЮЧЕВО: возвращаем копию, не оригинал
             return [...mockServers]
         }
 
-        const response = await getUserGuilds()
-        return response
+        return await getUserGuilds()
+    }
+)
+
+export const createServer = createAsyncThunk(
+    'servers/createServer',
+    async (data: CreateGuildRequest) => {
+        if (USE_MOCK) {
+            await new Promise(res => setTimeout(res, 300))
+
+            const newServer: Guild = {
+                id: Date.now().toString(),
+                ownerId: 'mock-user',
+                name: data.name,
+                icon: data.icon || 'default',
+                memberCount: 1,
+                description: data.description || '',
+                createdAt: new Date().toISOString(),
+            }
+
+            mockServers.push(newServer)
+            return newServer
+        }
+
+        return await createGuild(data)
     }
 )
 
@@ -61,11 +83,6 @@ const serverSlice = createSlice({
     reducers: {
         setCurrentServer: (state, action: PayloadAction<Guild | null>) => {
             state.currentServer = action.payload
-        },
-        clearServers: (state) => {
-            state.servers = []
-            state.currentServer = null
-            state.error = null
         },
         addServer: (state, action: PayloadAction<Guild>) => {
             state.servers.push(action.payload)
@@ -95,13 +112,24 @@ const serverSlice = createSlice({
                 state.isLoading = false
                 state.error = action.error.message || 'Failed to fetch servers'
             })
+            .addCase(createServer.pending, (state) => {
+                state.isLoading = true
+                state.error = null
+            })
+            .addCase(createServer.fulfilled, (state, action) => {
+                state.isLoading = false
+                state.servers.push(action.payload)
+            })
+            .addCase(createServer.rejected, (state, action) => {
+                state.isLoading = false
+                state.error = action.error.message || 'Failed to create server'
+            })
     },
 })
 
-export const { setCurrentServer, clearServers, addServer, removeServer } = serverSlice.actions
+export const { setCurrentServer, addServer, removeServer } = serverSlice.actions
 export default serverSlice.reducer
 
-// Селекторы
 export const selectServers = (state: { servers: ServerState }) => state.servers.servers
 export const selectCurrentServer = (state: { servers: ServerState }) => state.servers.currentServer
 export const selectServersLoading = (state: { servers: ServerState }) => state.servers.isLoading

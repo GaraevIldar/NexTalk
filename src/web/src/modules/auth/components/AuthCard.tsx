@@ -5,7 +5,12 @@ import { Icon } from '../../../shared/components/Icon/Icon'
 interface AuthCardProps {
     isLogin: boolean
     onLogin: (email: string, password: string) => void
-    onRegister: (username: string, email: string, password: string, confirmPassword: string) => void
+    onRegister: (
+        username: string,
+        nickname: string,
+        email: string,
+        password: string
+    ) => void
     onToggleMode: () => void
     isLoading?: boolean
     error?: string
@@ -21,9 +26,11 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                                                   }) => {
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
-    const [username, setUsername] = useState('')
+    const [name, setName] = useState('')
     const [confirmPassword, setConfirmPassword] = useState('')
     const [errors, setErrors] = useState<Record<string, string>>({})
+    const [nickname, setNickname] = useState('')
+    const [acceptPolicy, setAcceptPolicy] = useState(false)
 
     const validateLogin = (): boolean => {
         const newErrors: Record<string, string> = {}
@@ -36,13 +43,23 @@ export const AuthCard: React.FC<AuthCardProps> = ({
 
     const validateRegister = (): boolean => {
         const newErrors: Record<string, string> = {}
-        if (!username.trim()) newErrors.username = 'Введите имя пользователя'
-        else if (username.length < 3) newErrors.username = 'Минимум 3 символа'
+
+        if (!name.trim()) newErrors.name = 'Введите имя пользователя'
+        else if (name.length < 3) newErrors.username = 'Минимум 3 символа'
+
+        if (!nickname.trim()) newErrors.nickname = 'Введите никнейм'
+        else if (nickname.length < 2) newErrors.nickname = 'Минимум 2 символа'
+
         if (!email.trim()) newErrors.email = 'Введите email'
         else if (!/\S+@\S+\.\S+/.test(email)) newErrors.email = 'Неверный формат email'
+
         if (!password) newErrors.password = 'Введите пароль'
         else if (password.length < 6) newErrors.password = 'Минимум 6 символов'
+
         if (password !== confirmPassword) newErrors.confirmPassword = 'Пароли не совпадают'
+
+        if (!acceptPolicy) newErrors.policy = 'Необходимо принять политику'
+
         setErrors(newErrors)
         return Object.keys(newErrors).length === 0
     }
@@ -52,7 +69,9 @@ export const AuthCard: React.FC<AuthCardProps> = ({
         if (isLogin) {
             if (validateLogin()) onLogin(email, password)
         } else {
-            if (validateRegister()) onRegister(username, email, password, confirmPassword)
+            if (validateRegister()) {
+                onRegister(name, nickname, email, password)
+            }
         }
     }
 
@@ -80,21 +99,39 @@ export const AuthCard: React.FC<AuthCardProps> = ({
 
             <form onSubmit={handleSubmit} className={styles.form}>
                 {!isLogin && (
-                    <div className={styles.field}>
-                        <label className={styles.label}>
-                            <Icon name="user" size={16} />
-                            Имя пользователя
-                        </label>
-                        <input
-                            type="text"
-                            value={username}
-                            onChange={(e) => setUsername(e.target.value)}
-                            placeholder="Введите имя"
-                            className={`${styles.input} ${errors.username ? styles.inputError : ''}`}
-                            disabled={isLoading}
-                        />
-                        {errors.username && <span className={styles.error}>{errors.username}</span>}
-                    </div>
+                    <>
+                        <div className={styles.field}>
+                            <label className={styles.label}>
+                                <Icon name="user" size={16} />
+                                Имя пользователя
+                            </label>
+                            <input
+                                type="text"
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
+                                placeholder="Введите имя"
+                                className={`${styles.input} ${errors.username ? styles.inputError : ''}`}
+                                disabled={isLoading}
+                            />
+                            {errors.username && <span className={styles.error}>{errors.username}</span>}
+                        </div>
+                        <div className={styles.field}>
+                            <label className={styles.label}>
+                                <Icon name="at-sign" size={16} />
+                                Никнейм
+                            </label>
+                            <input
+                                type="text"
+                                value={nickname}
+                                onChange={(e) => setNickname(e.target.value)}
+                                placeholder="Например: nexdude"
+                                className={`${styles.input} ${errors.nickname ? styles.inputError : ''}`}
+                                disabled={isLoading}
+                            />
+                            {errors.nickname && <span className={styles.error}>{errors.nickname}</span>}
+                        </div>
+                    </>
+
                 )}
 
                 <div className={styles.field}>
@@ -130,21 +167,39 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                 </div>
 
                 {!isLogin && (
-                    <div className={styles.field}>
-                        <label className={styles.label}>
-                            <Icon name="lock" size={16} />
-                            Подтверждение пароля
-                        </label>
-                        <input
-                            type="password"
-                            value={confirmPassword}
-                            onChange={(e) => setConfirmPassword(e.target.value)}
-                            placeholder="••••••••"
-                            className={`${styles.input} ${errors.confirmPassword ? styles.inputError : ''}`}
-                            disabled={isLoading}
-                        />
-                        {errors.confirmPassword && <span className={styles.error}>{errors.confirmPassword}</span>}
-                    </div>
+                    <>
+                        <div className={styles.field}>
+                            <label className={styles.label}>
+                                <Icon name="lock" size={16} />
+                                Подтверждение пароля
+                            </label>
+                            <input
+                                type="password"
+                                value={confirmPassword}
+                                onChange={(e) => setConfirmPassword(e.target.value)}
+                                placeholder="••••••••"
+                                className={`${styles.input} ${errors.confirmPassword ? styles.inputError : ''}`}
+                                disabled={isLoading}
+                            />
+                            {errors.confirmPassword && <span className={styles.error}>{errors.confirmPassword}</span>}
+                        </div>
+                        <div className={styles.checkboxField}>
+                            <label className={styles.checkboxLabel}>
+                                <input
+                                    type="checkbox"
+                                    checked={acceptPolicy}
+                                    onChange={(e) => setAcceptPolicy(e.target.checked)}
+                                    disabled={isLoading}
+                                />
+                                <span>
+                                    Я принимаю Политику обработки персональных данных,
+                                    соответствующую требованиям Федерального закона № 152-ФЗ «О персональных данных»
+                                </span>
+                            </label>
+                            {errors.policy && <span className={styles.error}>{errors.policy}</span>}
+                        </div>
+                    </>
+
                 )}
 
                 <button
@@ -164,8 +219,8 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                     disabled={isLoading}
                 >
                     {isLogin
-                        ? 'Нет аккаунта? Зарегистрироваться'
-                        : 'Уже есть аккаунт? Войти'}
+                        ? <span>Нет аккаунта? <span>Зарегистрироваться</span></span>
+                        : <span>Уже есть аккаунт? <span>Войти</span></span>}
                 </button>
             </div>
         </div>

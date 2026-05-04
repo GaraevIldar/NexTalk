@@ -9,7 +9,6 @@ interface VoiceControlsProps {
     onToggleMute: () => void
     onToggleDeafen: () => void
     onDisconnect: () => void
-    volume?: number
     onVolumeChange?: (volume: number) => void
 }
 

@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react'
-import {login, selectIsLoading, selectAuthError, selectIsAuthenticated} from '../stores/authSlice'
+import {login, selectIsLoading, selectAuthError, selectIsAuthenticated, register} from '../stores/authSlice'
 import { GradientBackground } from '../../../shared/components/GradientBackground/GradientBackground'
 import { AuthCard } from '../components/AuthCard'
 import styles from './AuthPage.module.scss'
@@ -20,6 +20,7 @@ export const AuthPage: React.FC = () => {
         }
     }, [isAuthenticated])
 
+
     const handleLogin = async (email: string, password: string) => {
         // 🟢 MOCK
         // login() возвращает пользователя → делаем navigate('/servers')
@@ -32,24 +33,30 @@ export const AuthPage: React.FC = () => {
         // oidc → null → редиректа нет
 
         try {
-            const result = await dispatch(login()).unwrap()
-
-            if (result) {
-                navigate('/servers')
-            }
-
+            await dispatch(login({ email, password })).unwrap()
+            navigate('/servers')
         } catch (e) {
-            console.error('Login failed', e)
+            console.error(e)
         }
     }
 
-    const handleRegister = async () => {
+    const handleRegister = async (
+        name: string,
+        nickname: string,
+        email: string,
+        password: string
+    ) => {
         if (import.meta.env.VITE_USE_AUTH_MOCK === 'true') {
-            await dispatch(login()) // просто логиним
+            try {
+                await dispatch(register({ name, nickname, email, password })).unwrap()
+                navigate('/servers')
+            } catch (e) {
+                console.error(e)
+            }
             return
         }
 
-        // Реальный OIDC flow с параметром prompt=create
+        // OIDC
         const authUrl = new URL(import.meta.env.VITE_OIDC_AUTHORITY + '/oauth/v2/authorize')
         authUrl.searchParams.set('client_id', import.meta.env.VITE_OIDC_CLIENT_ID)
         authUrl.searchParams.set('redirect_uri', import.meta.env.VITE_OIDC_REDIRECT_URI)
@@ -58,7 +65,6 @@ export const AuthPage: React.FC = () => {
         authUrl.searchParams.set('prompt', 'create')
 
         window.location.href = authUrl.toString()
-
     }
 
     const toggleMode = () => {

@@ -1,13 +1,11 @@
-import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit'
+import {createAsyncThunk, createSlice, PayloadAction} from '@reduxjs/toolkit'
 import {oidcService} from "../oidc/oidcService.ts";
 
 export interface User {
     id: string
-    username: string
+    name?: string
     email: string
-    displayName?: string
-    avatar?: string
-    emailVerified?: boolean
+    nickname?: string
 }
 
 export interface Tokens {
@@ -34,23 +32,27 @@ const initialState: AuthState = {
     error: null,
 }
 
-// Асинхронный thunk для логина (редирект на Zitadel)
 export const login = createAsyncThunk(
     'auth/login',
-    async (_, { dispatch }) => {
+    async ({ email, password }: { email: string, password: string }) => {
+
         if (import.meta.env.VITE_USE_AUTH_MOCK === 'true') {
-            // 👇 имитация запроса
-            await new Promise(res => setTimeout(res, 500))
+            await new Promise(res => setTimeout(res, 300))
+
+            const storedUser = localStorage.getItem('mock_user')
+
+            if (!storedUser) {
+                throw new Error('Пользователь не найден')
+            }
+
+            const user = JSON.parse(storedUser)
+
+            if (user.email !== email) {
+                throw new Error('Неверный email')
+            }
 
             return {
-                user: {
-                    id: 'mock-id',
-                    username: 'mockuser',
-                    email: 'mock@example.com',
-                    displayName: 'Mock User',
-                    avatar: '',
-                    emailVerified: true,
-                },
+                user,
                 tokens: {
                     access_token: 'mock-token',
                     expires_in: 3600,
@@ -58,14 +60,51 @@ export const login = createAsyncThunk(
             }
         }
 
-        // 👉 реальный код
         sessionStorage.setItem('return_url', window.location.pathname)
         await oidcService.login()
         return null
     }
 )
 
-// Асинхронный thunk для выхода
+export const register = createAsyncThunk(
+    'auth/register',
+    async ({
+               name,
+               nickname,
+               email,
+               password
+           }: {
+        name: string
+        nickname: string
+        email: string
+        password: string
+    }) => {
+
+        if (import.meta.env.VITE_USE_AUTH_MOCK === 'true') {
+            await new Promise(res => setTimeout(res, 300))
+
+            const newUser = {
+                id: Date.now().toString(),
+                name,
+                nickname,
+                email,
+            }
+
+            localStorage.setItem('mock_user', JSON.stringify(newUser))
+
+            return {
+                user: newUser,
+                tokens: {
+                    access_token: 'mock-token',
+                    expires_in: 3600,
+                },
+            }
+        }
+
+        throw new Error('Register not implemented')
+    }
+)
+
 export const logout = createAsyncThunk(
     'auth/logout',
     async () => {
@@ -78,7 +117,6 @@ export const logout = createAsyncThunk(
     }
 )
 
-// Асинхронный thunk для инициализации (проверка сохраненной сессии)
 export const initializeAuth = createAsyncThunk(
     'auth/initialize',
     async () => {
@@ -105,15 +143,13 @@ export const initializeAuth = createAsyncThunk(
             return {
                 user: {
                     id: userInfo.sub,
-                    username: userInfo.preferred_username,
+                    name: userInfo.preferred_username,
                     email: userInfo.email,
-                    displayName: userInfo.name,
-                    avatar: userInfo.picture,
-                    emailVerified: userInfo.email_verified,
+                    nickname: userInfo.name,
                 },
                 tokens: {
                     access_token: accessToken,
-                    refresh_token: undefined, // Из oidcService можно получить refresh
+                    refresh_token: undefined,
                     expires_in: 3600,
                 },
                 isAuthenticated: true,
@@ -124,16 +160,13 @@ export const initializeAuth = createAsyncThunk(
     }
 )
 
-// Асинхронный thunk для обновления токена
 export const refreshToken = createAsyncThunk(
     'auth/refreshToken',
     async () => {
-        const tokens = await oidcService.refreshToken()
-        return tokens
+        return await oidcService.refreshToken()
     }
 )
 
-// Асинхронный thunk для обработки callback (обмен code на токены)
 export const handleAuthCallback = createAsyncThunk(
     'auth/handleCallback',
     async ({ code, state }: { code: string; state: string }) => {
@@ -147,11 +180,9 @@ export const handleAuthCallback = createAsyncThunk(
         return {
             user: {
                 id: userInfo.sub,
-                username: userInfo.preferred_username,
+                name: userInfo.preferred_username,
                 email: userInfo.email,
-                displayName: userInfo.name,
-                avatar: userInfo.picture,
-                emailVerified: userInfo.email_verified,
+                nickname: userInfo.name,
             },
             tokens: {
                 access_token: tokens?.access_token,
@@ -168,7 +199,6 @@ const authSlice = createSlice({
     name: 'auth',
     initialState,
     reducers: {
-        // Синхронные actions
         setUser: (state, action: PayloadAction<User | null>) => {
             state.user = action.payload
             state.isAuthenticated = !!action.payload
@@ -198,7 +228,6 @@ const authSlice = createSlice({
         },
     },
     extraReducers: (builder) => {
-        // Login
         builder.addCase(login.pending, (state) => {
             state.isLoading = true
             state.error = null
@@ -217,7 +246,21 @@ const authSlice = createSlice({
             state.error = action.error.message || 'Login failed'
         })
 
-        // Initialize
+        builder.addCase(register.pending, (state) => {
+            state.isLoading = true
+            state.error = null
+        })
+        builder.addCase(register.fulfilled, (state, action) => {
+            state.isLoading = false
+            state.user = action.payload.user
+            state.tokens = action.payload.tokens
+            state.isAuthenticated = true
+        })
+        builder.addCase(register.rejected, (state, action) => {
+            state.isLoading = false
+            state.error = action.error.message || 'Register failed'
+        })
+
         builder.addCase(initializeAuth.pending, (state) => {
             state.isLoading = true
         })
@@ -234,7 +277,6 @@ const authSlice = createSlice({
             state.error = action.error.message || 'Initialization failed'
         })
 
-        // Handle callback
         builder.addCase(handleAuthCallback.pending, (state) => {
             state.isLoading = true
             state.error = null
@@ -251,7 +293,6 @@ const authSlice = createSlice({
             state.error = action.error.message || 'Callback handling failed'
         })
 
-        // Refresh token
         builder.addCase(refreshToken.fulfilled, (state, action) => {
             if (state.tokens) {
                 state.tokens.access_token = action.payload.access_token
@@ -262,13 +303,11 @@ const authSlice = createSlice({
             }
         })
         builder.addCase(refreshToken.rejected, (state) => {
-            // Если не удалось обновить токен - разлогиниваем
             state.user = null
             state.tokens = null
             state.isAuthenticated = false
         })
 
-        // Logout
         builder.addCase(logout.fulfilled, (state) => {
             state.user = null
             state.tokens = null
@@ -278,7 +317,6 @@ const authSlice = createSlice({
     },
 })
 
-// Экспорт actions
 export const {
     setUser,
     setTokens,
@@ -288,10 +326,8 @@ export const {
     clearAuth,
 } = authSlice.actions
 
-// Экспорт reducer
 export default authSlice.reducer
 
-// Селекторы
 export const selectUser = (state: { auth: AuthState }) => state.auth.user
 export const selectTokens = (state: { auth: AuthState }) => state.auth.tokens
 export const selectIsAuthenticated = (state: { auth: AuthState }) => state.auth.isAuthenticated
