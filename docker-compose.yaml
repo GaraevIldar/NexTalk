@@ -17,23 +17,22 @@ services:
       zitadel-login:
         condition: service_healthy
       guild-service:
-        condition: service_started
+        condition: service_healthy
       messaging-service:
-        condition: service_started
+        condition: service_healthy
       voice-service:
-        condition: service_started
+        condition: service_healthy
       websocket-gateway:
-        condition: service_started
+        condition: service_healthy
     networks:
       - nextalk
       - zitadel
     healthcheck:
-      test: ["CMD-SHELL", "wget -q --spider http://localhost:80/health || exit 1"]
+      test: ["CMD", "curl", "-sf", "http://localhost/health"]
       interval: 15s
       timeout: 5s
       retries: 3
       start_period: 10s
-    stop_grace_period: 10s
 
   guild-service:
     build:
@@ -57,12 +56,11 @@ services:
       postgres:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5001/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:5001/readyz"]
       interval: 15s
       timeout: 5s
       retries: 3
       start_period: 15s
-    stop_grace_period: 30s
 
   messaging-service:
     build:
@@ -86,12 +84,11 @@ services:
       postgres:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5002/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:5002/readyz"]
       interval: 15s
       timeout: 5s
       retries: 3
       start_period: 15s
-    stop_grace_period: 30s
 
   voice-service:
     build:
@@ -112,13 +109,15 @@ services:
       Logging__LogLevel__Microsoft.AspNetCore: Warning
     networks:
       - nextalk
+    depends_on:
+      livekit:
+        condition: service_started
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5003/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:5003/readyz"]
       interval: 15s
       timeout: 5s
       retries: 3
       start_period: 15s
-    stop_grace_period: 30s
 
   websocket-gateway:
     build:
@@ -140,12 +139,11 @@ services:
     networks:
       - nextalk
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5004/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:5004/readyz"]
       interval: 15s
       timeout: 5s
       retries: 3
       start_period: 15s
-    stop_grace_period: 30s
 
   postgres:
     image: postgres:${POSTGRES_TAG}
@@ -162,6 +160,7 @@ services:
       start_period: 20s
     volumes:
       - postgres-data:/var/lib/postgresql/data:rw
+      - ./infra/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     networks:
       - nextalk
       - zitadel
@@ -188,15 +187,21 @@ services:
       ZITADEL_EXTERNALPORT: ${ZITADEL_EXTERNALPORT}
       ZITADEL_EXTERNALSECURE: ${ZITADEL_EXTERNALSECURE}
       ZITADEL_TLS_ENABLED: false
+      
       ZITADEL_DATABASE_POSTGRES_DSN: ${ZITADEL_DATABASE_POSTGRES_DSN}
+      
       ZITADEL_FIRSTINSTANCE_ORG_HUMAN_PASSWORDCHANGEREQUIRED: false
       ZITADEL_FIRSTINSTANCE_LOGINCLIENTPATPATH: /zitadel/bootstrap/login-client.pat
       ZITADEL_FIRSTINSTANCE_ORG_LOGINCLIENT_MACHINE_USERNAME: login-client
       ZITADEL_FIRSTINSTANCE_ORG_LOGINCLIENT_MACHINE_NAME: Login Client
       ZITADEL_FIRSTINSTANCE_ORG_LOGINCLIENT_PAT_EXPIRATIONDATE: ${LOGIN_CLIENT_PAT_EXPIRATION}
+      
       ZITADEL_DEFAULTINSTANCE_FEATURES_LOGINV2_REQUIRED: true
       ZITADEL_DEFAULTINSTANCE_FEATURES_LOGINV2_BASEURI: ${ZITADEL_PUBLIC_SCHEME}://${ZITADEL_DOMAIN}:${ZITADEL_EXTERNALPORT}/ui/v2/login/
       ZITADEL_OIDC_DEFAULTLOGINURLV2: ${ZITADEL_PUBLIC_SCHEME}://${ZITADEL_DOMAIN}:${ZITADEL_EXTERNALPORT}/ui/v2/login/login?authRequest=
+      ZITADEL_OIDC_DEFAULTLOGOUTURLV2: ${ZITADEL_PUBLIC_SCHEME}://${ZITADEL_DOMAIN}:${ZITADEL_EXTERNALPORT}/ui/v2/login/logout?post_logout_redirect=
+      ZITADEL_SAML_DEFAULTLOGINURLV2: ${ZITADEL_PUBLIC_SCHEME}://${ZITADEL_DOMAIN}:${ZITADEL_EXTERNALPORT}/ui/v2/login/login?samlRequest=
+      
       ZITADEL_LOGSTORE_ACCESS_STDOUT_ENABLED: ${ZITADEL_ACCESS_LOG_STDOUT_ENABLED}
     healthcheck:
       test: ["CMD", "/app/zitadel", "ready"]
@@ -214,7 +219,7 @@ services:
         condition: service_healthy
 
   zitadel-login:
-    image: ghcr.io/zitadel/zitadel-login:${ZITADEL_LOGIN_TAG}
+    image: ghcr.io/zitadel/zitadel-login:${ZITADEL_TAG}
     restart: unless-stopped
     user: "0"
     environment:
@@ -246,12 +251,6 @@ services:
     volumes:
       - ./infra/livekit/livekit.yaml:/etc/livekit.yaml:ro
     command: --config /etc/livekit.yaml
-    healthcheck:
-      test: ["CMD-SHELL", "nc -z localhost 7880 || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
     networks:
       - nextalk
     depends_on:
