@@ -560,11 +560,11 @@ modelConnections:
   description: SignalR WebSocket proxy
 
 - id: conn-nginx-zitadel
-  name: '/auth/* → Zitadel API'
+  name: '/.well-known/, /oauth/, /oidc/, /ui/ → Zitadel'
   originId: app-nginx
   targetId: app-zitadel
   direction: outgoing
-  description: 'OIDC endpoints proxy. Nginx срезает /auth/ перед передачей (trailing-slash proxy_pass)'
+  description: 'OIDC/SAML/Admin эндпоинты через grpc_pass (zitadel-api:8080). Login UI (/ui/v2/login) через proxy_pass (zitadel-login:3000).'
 
 # --- Inter-service ---
 - id: conn-wsgw-messaging
@@ -705,14 +705,14 @@ modelConnections:
 ```
 1. Пользователь → React SPA: Нажимает "Войти"
 2. React SPA: oidc-client-ts создает Authorization Request
-   URL: /auth/oauth/v2/authorize?client_id=...&redirect_uri=...
+   URL: /oauth/v2/authorize?client_id=...&redirect_uri=...
         &response_type=code&scope=openid+profile+email&code_challenge=...
 3. React SPA → Nginx → Zitadel: браузер переходит на форму логина Zitadel (OIDC redirect)
 4. Пользователь: Вводит email + пароль (или регистрируется) на форме Zitadel
 5. Zitadel: Валидация → создание сессии
 6. Zitadel → React SPA: HTTP redirect на /callback?code=AUTH_CODE
 7. React SPA: oidc-client-ts обменивает code на tokens
-   POST /auth/oauth/v2/token (через Nginx → Zitadel)
+   POST /oauth/v2/token (через Nginx → Zitadel)
    Body: grant_type=authorization_code, code, code_verifier (PKCE)
 8. Zitadel → React SPA: { access_token (JWT), refresh_token, id_token }
 9. React SPA → Redux store: Сохранить access_token в памяти
@@ -1059,7 +1059,7 @@ modelConnections:
 
 1. React SPA (oidc-client-ts): таймер обнаружил, что access_token истекает
 2. React SPA (oidc-client-ts): создает скрытый <iframe>
-   src="/auth/oauth/v2/authorize?response_type=code&prompt=none
+   src="/oauth/v2/authorize?response_type=code&prompt=none
         &client_id=...&redirect_uri=...&code_challenge=...&scope=openid+profile+email"
 
 3. iframe → Nginx → Zitadel: запрос авторизации с prompt=none
@@ -1071,7 +1071,7 @@ modelConnections:
 5. iframe → React SPA (oidc-client-ts): сообщение через postMessage с NEW_CODE
 
 6. React SPA (oidc-client-ts) → Nginx → Zitadel:
-   POST /auth/oauth/v2/token
+   POST /oauth/v2/token
    Body: grant_type=authorization_code, code=NEW_CODE, code_verifier (PKCE)
 
 7. Zitadel → React SPA: { access_token (новый JWT), refresh_token, id_token }

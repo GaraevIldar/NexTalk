@@ -7,7 +7,7 @@
 
 | Вам нужно | Идите сюда |
 |:--|:--|
-| **Запустить проект** | [§0 Быстрый старт](#0-быстрый-старт) |
+| Запустить проект | [§0 Быстрый старт](#0-быстрый-старт) |
 | Понять, что это за проект | [§1 Проблема и идея](#1-проблема-и-идея) |
 | Увидеть, что входит в MVP | [§2 MVP](#2-mvp) |
 | Понять архитектуру (схемы) | [c4-model.md](docs/c4-model.md) |
@@ -58,45 +58,22 @@
 git clone <repo-url>
 cd NexTalk
 
-# 2. Скопировать конфиг
-cp .env.example .env
-
-# 3. Запустить все сервисы (дождётся healthy-статуса всех контейнеров)
-docker compose --env-file=.env up -d --wait
+# 2. Запустить все сервисы (дождаться healthy-статуса всех контейнеров)
+docker compose --env-file=.env.example up -d --wait
 ```
 
 После успешного запуска будут доступны:
 
 | Адрес | Что там |
 |:--|:--|
-| http://localhost:8080 | Nginx — точка входа для всех запросов |
-| http://localhost:8080/auth | Zitadel — регистрация и логин |
+| http://localhost:8080 | Nginx - точка входа, редирект на страницу входа |
+| http://localhost:8080/ui/v2/login | Zitadel - регистрация и логин |
+| http://localhost:8080/.well-known/openid-configuration | Zitadel OIDC Discovery |
 | http://localhost:8080/api/guilds | Guild Service (требует JWT) |
 | http://localhost:8080/api/channels | Messaging Service (требует JWT) |
 | http://localhost:8080/api/voice | Voice Service (требует JWT) |
 | http://localhost:8080/ws | WebSocket Gateway (SignalR) |
-| http://localhost:7880 | LiveKit SFU (WebRTC) |
-
-### Переменные окружения (`.env.example`)
-
-| Переменная | Дефолт | Описание |
-|:--|:--|:--|
-| `PROXY_HTTP_PUBLISHED_PORT` | `8080` | Порт Nginx на хосте |
-| `ASPNETCORE_ENVIRONMENT` | `Development` | Среда ASP.NET Core (`Development` / `Production`) |
-| `POSTGRES_DB` | `nextalk` | Название БД NexTalk |
-| `POSTGRES_USER` | `postgres` | Пользователь PostgreSQL |
-| `POSTGRES_PASSWORD` | `postgres` | Пароль PostgreSQL |
-| `NEXTALK_DATABASE_POSTGRES_DSN` | — | Connection string для .NET сервисов |
-| `ZITADEL_DATABASE_POSTGRES_DSN` | — | Connection string для Zitadel |
-| `ZITADEL_DOMAIN` | `localhost` | Домен Zitadel (должен совпадать с redirect_uri в OIDC-клиенте) |
-| `ZITADEL_EXTERNALPORT` | `8080` | Внешний порт Zitadel (совпадает с портом Nginx) |
-| `ZITADEL_MASTERKEY` | — | Ключ шифрования Zitadel, ровно 32 символа |
-| `LOGIN_CLIENT_PAT_EXPIRATION` | `2099-12-31T23:59:59Z` | Срок действия PAT для login-клиента |
-| `LIVEKIT_API_KEY` | `devkey` | API-ключ LiveKit (должен совпадать с `infra/livekit/livekit.yaml`) |
-| `LIVEKIT_SECRET_KEY` | `devsecret` | Secret LiveKit (должен совпадать с `infra/livekit/livekit.yaml`) |
-| `REDIS_TAG` | `8.6.2-alpine` | Версия образа Redis |
-
-> **Важно для продакшна:** смените `POSTGRES_PASSWORD`, `ZITADEL_MASTERKEY` (32 символа), `LIVEKIT_API_KEY` и `LIVEKIT_SECRET_KEY` на сильные значения.
+| http://localhost:7880 | LiveKit SFU - HTTP API |
 
 ### Проверка работоспособности
 
@@ -104,12 +81,8 @@ docker compose --env-file=.env up -d --wait
 # Убедиться, что все контейнеры healthy
 docker compose ps
 
-# Health-эндпоинты сервисов (liveness)
-curl http://localhost:8080/health           # Nginx upstream health
-curl http://localhost:5001/healthz          # Guild Service — liveness
-curl http://localhost:5002/readyz           # Messaging Service — readiness (+ PG)
-curl http://localhost:5003/healthz          # Voice Service — liveness
-curl http://localhost:5004/healthz          # WebSocket Gateway — liveness
+# Health-эндпоинт nginx (публичный порт)
+curl http://localhost:8080/health
 
 # Логи всех сервисов в JSON-формате
 docker compose logs guild-service | head -20
@@ -118,7 +91,7 @@ docker compose logs guild-service | head -20
 ### Остановка
 
 ```bash
-# Остановить контейнеры (данные сохраняются в volumes)
+# Остановить контейнеры
 docker compose down
 
 # Остановить и удалить все данные
@@ -424,7 +397,7 @@ docker-compose → k8s. Те же Docker-образы, другой оркест
 | TLS | Терминация HTTPS (в k8s - на Ingress) |
 
 В docker-compose: контейнер `Nginx:alpine` с кастомным `Nginx.conf`.
-В k8s: Nginx Ingress Controller (задеплоен `kubectl apply -f`; Traefik в k3s отключён) + ресурс `Ingress`.
+В k8s: Nginx Ingress Controller (задеплоен `kubectl apply -f`; Traefik в k3s отключен) + ресурс `Ingress`.
 
 ### Zitadel (Identity Provider)
 
@@ -652,14 +625,14 @@ Polly Circuit Breaker на каждом `HttpClient`:
 | NFR‑4 | Задержка голоса (end-to-end) | медиана < 100 мс, p95 < 200 мс | LiveKit SFU + встроенный TURN; SRTP/DTLS; LiveKit built-in metrics |
 | NFR‑5 | Загрузка истории сообщений | p95 < 150 мс | Cursor-based SELECT с индексом `(channel_id, id DESC)`, LIMIT 50 |
 
-### Надёжность и доступность
+### Надежность и доступность
 
 | ID | Характеристика | Целевое значение | Как достигается |
 |:--|:--|:--|:--|
 | NFR‑6 | Доступность | 99% uptime (≈ 7 ч/мес простоя) | k8s liveness/readiness probes; автоматический перезапуск подов; Grafana - метрика `up` |
 | NFR‑7 | Время восстановления (RTO) | < 45 с | Pod restart 15–30 с + CB half-open 15 с; k8s `restartPolicy: Always` |
 | NFR‑8 | Гарантия доставки сообщений | At-least-once | Outbox Pattern: INSERT message + outbox_event в одной транзакции; retry до 5 раз с backoff |
-| NFR‑9 | Идемпотентность | Повторный запрос с тем же ключом не создаёт дубль | Таблица `idempotency_keys` с TTL 24 ч; проверка перед INSERT |
+| NFR‑9 | Идемпотентность | Повторный запрос с тем же ключом не создает дубль | Таблица `idempotency_keys` с TTL 24 ч; проверка перед INSERT |
 | NFR‑10 | Circuit Breaker | OPEN после 5 ошибок за 30 с; HALF-OPEN через 15 с | Polly: `HandledEventsAllowedBeforeBreaking=5`, `DurationOfBreak=15s` |
 
 ### Безопасность
