@@ -43,7 +43,6 @@ http {
     # Rate limiting
     limit_req_zone $binary_remote_addr zone=api_limit:10m rate=100r/s;
     limit_req_zone $binary_remote_addr zone=auth_limit:10m rate=20r/s;
-    limit_conn_zone $binary_remote_addr zone=addr:10m;
 
     upstream guild-service {
         server guild-service:5001;
@@ -77,10 +76,11 @@ http {
 
     server {
         listen 80;
+        http2 on;
         server_name ${ZITADEL_DOMAIN};
 
         # Заголовки безопасности
-        proxy_set_header Host $host;
+        proxy_set_header Host $http_host;
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Real-IP $remote_addr;
@@ -97,10 +97,10 @@ http {
         proxy_send_timeout 30s;
         proxy_read_timeout 30s;
 
-        # Корневой путь -> редирект на страницу входа Zitadel
         location = / {
             limit_req zone=auth_limit burst=10 nodelay;
-            return 302 /ui/v2/login/;
+            add_header Cache-Control "no-store" always;
+            return 302 $scheme://$http_host/ui/v2/login/;
         }
 
         location /health {
@@ -109,38 +109,29 @@ http {
             add_header Content-Type application/json;
         }
 
-        location /ui/v2/login/ {
+        # ^~ останавливает проверку regex при совпадении prefix:
+        # без него location ~ ^/(ui/|...) перехватывал бы /ui/v2/login
+        # и отправлял на grpc_pass вместо zitadel-login
+        location ^~ /ui/v2/login {
             limit_req zone=auth_limit burst=10 nodelay;
             proxy_pass http://zitadel-login;
-            proxy_set_header Host $host;
+            proxy_set_header Host $http_host;
             proxy_set_header X-Forwarded-Proto $scheme;
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
             proxy_set_header X-Real-IP $remote_addr;
-            proxy_set_header X-Request-Id $request_id;
-            proxy_set_header X-Forwarded-Prefix /ui/v2/login;
         }
 
-        # Zitadel прочие UI
-        location /ui {
-            proxy_pass http://zitadel-api;
+        location ^~ /.well-known/ {
+            grpc_pass grpc://zitadel-api;
+            grpc_set_header Host $http_host;
         }
 
-        # Zitadel OIDC / OAuth2 / SAML публичные эндпоинты
-        location /.well-known/ {
-            proxy_pass http://zitadel-api;
+        # Zitadel API
+        location ~ ^/(ui/|auth/|management/|admin/|system/|v2/|oidc/|openidconnect/|oauth/|saml/|debug/|zitadel\.) {
+            grpc_pass grpc://zitadel-api;
+            grpc_set_header Host $http_host;
         }
 
-        location /oauth/ {
-            proxy_pass http://zitadel-api;
-        }
-
-        location /oidc/ {
-            proxy_pass http://zitadel-api;
-        }
-
-        location /saml/ {
-            proxy_pass http://zitadel-api;
-        }
         location /api/guilds {
             limit_req zone=api_limit burst=50 nodelay;
             proxy_pass http://guild-service;
@@ -180,7 +171,7 @@ http {
             limit_req zone=api_limit burst=100 nodelay;
             proxy_pass http://websocket-gateway;
             proxy_http_version 1.1;
-            proxy_set_header Host $host;
+            proxy_set_header Host $http_host;
             proxy_set_header X-Forwarded-Proto $scheme;
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
             proxy_set_header X-Real-IP $remote_addr;
