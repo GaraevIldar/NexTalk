@@ -44,16 +44,17 @@ services:
       ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT}
       ASPNETCORE_URLS: http://+:5001
       ConnectionStrings__PostgresConnection: ${NEXTALK_DATABASE_POSTGRES_DSN}
+      ConnectionStrings__Redis: redis:6379,defaultDatabase=1
       Zitadel__Authority: ${ZITADEL_PUBLIC_SCHEME}://${ZITADEL_DOMAIN}:${ZITADEL_EXTERNALPORT}
       Zitadel__MetadataAddress: http://zitadel-api:8080/.well-known/openid-configuration
       Services__WebSocketGateway: http://websocket-gateway:5004
       Services__VoiceService: http://voice-service:5003
-      Logging__LogLevel__Default: Information
-      Logging__LogLevel__Microsoft.AspNetCore: Warning
     networks:
       - nextalk
     depends_on:
       postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5001/readyz"]
@@ -76,8 +77,6 @@ services:
       Zitadel__MetadataAddress: http://zitadel-api:8080/.well-known/openid-configuration
       Services__WebSocketGateway: http://websocket-gateway:5004
       Services__GuildService: http://guild-service:5001
-      Logging__LogLevel__Default: Information
-      Logging__LogLevel__Microsoft.AspNetCore: Warning
     networks:
       - nextalk
     depends_on:
@@ -105,8 +104,6 @@ services:
       LiveKit__ApiKey: ${LIVEKIT_API_KEY}
       LiveKit__SecretKey: ${LIVEKIT_SECRET_KEY}
       Services__GuildService: http://guild-service:5001
-      Logging__LogLevel__Default: Information
-      Logging__LogLevel__Microsoft.AspNetCore: Warning
     networks:
       - nextalk
     depends_on:
@@ -132,8 +129,6 @@ services:
       Zitadel__MetadataAddress: http://zitadel-api:8080/.well-known/openid-configuration
       Services__GuildService: http://guild-service:5001
       Services__MessagingService: http://messaging-service:5002
-      Logging__LogLevel__Default: Information
-      Logging__LogLevel__Microsoft.AspNetCore: Warning
       Presence__HeartbeatInterval: 20
       Presence__OfflineTimeout: 30
     networks:

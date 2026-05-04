@@ -1,15 +1,37 @@
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Serilog;
 
-var builder = WebApplication.CreateBuilder(args);
+Log.Logger = new LoggerConfiguration()
+    .WriteTo.Console()
+    .CreateBootstrapLogger();
 
-builder.Services.AddHealthChecks();
+try
+{
+    var builder = WebApplication.CreateBuilder(args);
 
-var app = builder.Build();
+    builder.Host.UseSerilog((ctx, lc) => lc.ReadFrom.Configuration(ctx.Configuration));
 
-app.MapGet("/", () => "Hello World!");
+    builder.Services.AddHealthChecks();
 
-app.MapHealthChecks("/healthz", new HealthCheckOptions { Predicate = _ => false });
+    var app = builder.Build();
 
-app.MapHealthChecks("/readyz", new HealthCheckOptions { Predicate = _ => false });
+    app.UseSerilogRequestLogging(opts =>
+        opts.EnrichDiagnosticContext = (dc, ctx) =>
+            dc.Set("CorrelationId",
+                ctx.Request.Headers["X-Request-Id"].FirstOrDefault()
+                ?? ctx.Request.Headers["X-Correlation-Id"].FirstOrDefault()
+                ?? ctx.TraceIdentifier));
 
-app.Run();
+    app.MapHealthChecks("/healthz", new HealthCheckOptions { Predicate = _ => false });
+    app.MapHealthChecks("/readyz", new HealthCheckOptions { Predicate = _ => false });
+
+    app.Run();
+}
+catch (Exception ex)
+{
+    Log.Fatal(ex, "Voice Service terminated unexpectedly");
+}
+finally
+{
+    Log.CloseAndFlush();
+}
