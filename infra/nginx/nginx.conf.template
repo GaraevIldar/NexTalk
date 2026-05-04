@@ -97,7 +97,7 @@ http {
         proxy_send_timeout 30s;
         proxy_read_timeout 30s;
 
-        # Корневой путь -> редирект на /ui/v2/login/
+        # Корневой путь -> редирект на страницу входа Zitadel
         location = / {
             limit_req zone=auth_limit burst=10 nodelay;
             return 302 /ui/v2/login/;
@@ -109,8 +109,7 @@ http {
             add_header Content-Type application/json;
         }
 
-        # Zitadel Login UI
-        location /ui/v2/login {
+        location /ui/v2/login/ {
             limit_req zone=auth_limit burst=10 nodelay;
             proxy_pass http://zitadel-login;
             proxy_set_header Host $host;
@@ -121,17 +120,27 @@ http {
             proxy_set_header X-Forwarded-Prefix /ui/v2/login;
         }
 
-        # Zitadel API - все OIDC/OAuth2/Management эндпоинты.
-        # /auth/oauth/v2/token → /oauth/v2/token
-        location /auth/ {
-            limit_req zone=auth_limit burst=20 nodelay;
-            proxy_pass http://zitadel-api/;
-
-            proxy_connect_timeout 60s;
-            proxy_send_timeout 60s;
-            proxy_read_timeout 60s;
+        # Zitadel прочие UI
+        location /ui {
+            proxy_pass http://zitadel-api;
         }
 
+        # Zitadel OIDC / OAuth2 / SAML публичные эндпоинты
+        location /.well-known/ {
+            proxy_pass http://zitadel-api;
+        }
+
+        location /oauth/ {
+            proxy_pass http://zitadel-api;
+        }
+
+        location /oidc/ {
+            proxy_pass http://zitadel-api;
+        }
+
+        location /saml/ {
+            proxy_pass http://zitadel-api;
+        }
         location /api/guilds {
             limit_req zone=api_limit burst=50 nodelay;
             proxy_pass http://guild-service;
@@ -169,7 +178,6 @@ http {
 
         location /ws {
             limit_req zone=api_limit burst=100 nodelay;
-
             proxy_pass http://websocket-gateway;
             proxy_http_version 1.1;
             proxy_set_header Host $host;
