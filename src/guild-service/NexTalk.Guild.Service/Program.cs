@@ -1,50 +1,35 @@
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Serilog;
 
-Log.Logger = new LoggerConfiguration()
-    .WriteTo.Console()
-    .CreateBootstrapLogger();
+var builder = WebApplication.CreateBuilder(args);
 
-try
+builder.Services.AddSerilog((_, lc) => lc.ReadFrom.Configuration(builder.Configuration));
+
+var redisConnectionString = builder.Configuration.GetConnectionString("Redis")!;
+
+builder.Services.AddStackExchangeRedisCache(opts =>
 {
-    var builder = WebApplication.CreateBuilder(args);
+    opts.Configuration = redisConnectionString;
+    opts.InstanceName = "nextalk:";
+});
 
-    builder.Host.UseSerilog((ctx, lc) => lc.ReadFrom.Configuration(ctx.Configuration));
+builder.Services.AddHealthChecks()
+    .AddNpgSql(builder.Configuration.GetConnectionString("PostgresConnection")!, tags: ["ready"])
+    .AddRedis(redisConnectionString, tags: ["ready"]);
 
-    var redisConnectionString = builder.Configuration.GetConnectionString("Redis")!;
+var app = builder.Build();
 
-    builder.Services.AddStackExchangeRedisCache(opts =>
-    {
-        opts.Configuration = redisConnectionString;
-        opts.InstanceName = "nextalk:";
-    });
+app.UseSerilogRequestLogging(opts =>
+    opts.EnrichDiagnosticContext = (dc, ctx) =>
+        dc.Set("CorrelationId",
+            ctx.Request.Headers["X-Request-Id"].FirstOrDefault()
+            ?? ctx.Request.Headers["X-Correlation-Id"].FirstOrDefault()
+            ?? ctx.TraceIdentifier));
 
-    builder.Services.AddHealthChecks()
-        .AddNpgSql(builder.Configuration.GetConnectionString("PostgresConnection")!, tags: ["ready"])
-        .AddRedis(redisConnectionString, tags: ["ready"]);
-
-    var app = builder.Build();
-
-    app.UseSerilogRequestLogging(opts =>
-        opts.EnrichDiagnosticContext = (dc, ctx) =>
-            dc.Set("CorrelationId",
-                ctx.Request.Headers["X-Request-Id"].FirstOrDefault()
-                ?? ctx.Request.Headers["X-Correlation-Id"].FirstOrDefault()
-                ?? ctx.TraceIdentifier));
-
-    app.MapHealthChecks("/healthz", new HealthCheckOptions { Predicate = _ => false });
-    app.MapHealthChecks("/readyz", new HealthCheckOptions
-    {
-        Predicate = check => check.Tags.Contains("ready")
-    });
-
-    app.Run();
-}
-catch (Exception ex)
+app.MapHealthChecks("/healthz", new HealthCheckOptions { Predicate = _ => false });
+app.MapHealthChecks("/readyz", new HealthCheckOptions
 {
-    Log.Fatal(ex, "Guild Service terminated unexpectedly");
-}
-finally
-{
-    Log.CloseAndFlush();
-}
+    Predicate = check => check.Tags.Contains("ready")
+});
+
+app.Run();

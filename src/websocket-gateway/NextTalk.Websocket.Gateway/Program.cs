@@ -1,37 +1,22 @@
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Serilog;
 
-Log.Logger = new LoggerConfiguration()
-    .WriteTo.Console()
-    .CreateBootstrapLogger();
+var builder = WebApplication.CreateBuilder(args);
 
-try
-{
-    var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddSerilog((_, lc) => lc.ReadFrom.Configuration(builder.Configuration));
 
-    builder.Host.UseSerilog((ctx, lc) => lc.ReadFrom.Configuration(ctx.Configuration));
+builder.Services.AddHealthChecks();
 
-    builder.Services.AddHealthChecks();
+var app = builder.Build();
 
-    var app = builder.Build();
+app.UseSerilogRequestLogging(opts =>
+    opts.EnrichDiagnosticContext = (dc, ctx) =>
+        dc.Set("CorrelationId",
+            ctx.Request.Headers["X-Request-Id"].FirstOrDefault()
+            ?? ctx.Request.Headers["X-Correlation-Id"].FirstOrDefault()
+            ?? ctx.TraceIdentifier));
 
-    app.UseSerilogRequestLogging(opts =>
-        opts.EnrichDiagnosticContext = (dc, ctx) =>
-            dc.Set("CorrelationId",
-                ctx.Request.Headers["X-Request-Id"].FirstOrDefault()
-                ?? ctx.Request.Headers["X-Correlation-Id"].FirstOrDefault()
-                ?? ctx.TraceIdentifier));
+app.MapHealthChecks("/healthz", new HealthCheckOptions { Predicate = _ => false });
+app.MapHealthChecks("/readyz", new HealthCheckOptions { Predicate = _ => false });
 
-    app.MapHealthChecks("/healthz", new HealthCheckOptions { Predicate = _ => false });
-    app.MapHealthChecks("/readyz", new HealthCheckOptions { Predicate = _ => false });
-
-    app.Run();
-}
-catch (Exception ex)
-{
-    Log.Fatal(ex, "WebSocket Gateway terminated unexpectedly");
-}
-finally
-{
-    Log.CloseAndFlush();
-}
+app.Run();
