@@ -1,16 +1,17 @@
 ﻿FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base
+USER root
+RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
 USER $APP_UID
 WORKDIR /app
-EXPOSE 8080
-EXPOSE 8081
+EXPOSE 5002
 
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["src/messaging-service/NexTalk.Messaging.Service/NexTalk.Messaging.Service.csproj", "src/messaging-service/NexTalk.Messaging.Service/"]
-RUN dotnet restore "src/messaging-service/NexTalk.Messaging.Service/NexTalk.Messaging.Service.csproj"
+COPY ["NexTalk.Messaging.Service/NexTalk.Messaging.Service.csproj", "NexTalk.Messaging.Service/"]
+RUN dotnet restore "NexTalk.Messaging.Service/NexTalk.Messaging.Service.csproj"
 COPY . .
-WORKDIR "/src/src/messaging-service/NexTalk.Messaging.Service"
+WORKDIR "/src/NexTalk.Messaging.Service"
 RUN dotnet build "./NexTalk.Messaging.Service.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 FROM build AS publish

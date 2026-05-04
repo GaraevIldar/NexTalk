@@ -81,6 +81,7 @@
 | App | Voice Service | ASP.NET | Голосовые сессии, LiveKit-токены |
 | App | Zitadel | Go | IdP: OIDC, регистрация, логин, JWT |
 | Store | PostgreSQL | PostgreSQL 17 | БД nextalk (guild, messaging) + БД zitadel |
+| Store | Redis | Redis 8 | Состояние комнат и участников LiveKit |
 | App | LiveKit | Go | SFU + встроенный TURN |
 | App | Prometheus | Prometheus | Сбор метрик /metrics |
 | App | Grafana | Grafana | Дашборды |
@@ -105,7 +106,8 @@
 | PresenceTracker | In-memory ConcurrentDictionary, heartbeat TTL |
 | MessagingHttpClient | HTTP → Messaging Service (Polly: Retry + CB) |
 | GuildHttpClient | HTTP → Guild Service (Polly: Retry + CB) |
-| BroadcastController | POST /internal/broadcast (от Outbox) |
+| BroadcastController | POST /internal/broadcast (от Outbox Worker, Guild Service, Voice Service) |
+| DisconnectController | POST /internal/disconnect/{userId} - принудительное отключение |
 
 #### Guild Service
 
@@ -116,6 +118,8 @@
 | InviteController | Создание и принятие инвайтов |
 | MemberController | Список, кик, бан, назначение ролей |
 | InternalAccessController | GET /internal/channels/{id}/check-access |
+| InternalUserController | GET /internal/users/{userId}/guilds |
+| InternalMembersController | GET /internal/guilds/{id}/members |
 | RbacService | Проверка прав (3 фиксированные роли: Owner/Admin/Member) |
 
 #### Messaging Service
@@ -303,6 +307,14 @@ modelObjects:
   caption: PostgreSQL 17
   tagIds: [tag-storage, tag-postgres]
 
+- id: store-redis
+  name: Redis
+  type: store
+  parentId: system-nextalk
+  description: 'Используется LiveKit для хранения состояния комнат и участников (room registry, participant tracking).'
+  caption: Redis 8
+  tagIds: [tag-storage]
+
 # --- Media ---
 - id: app-livekit
   name: LiveKit
@@ -365,7 +377,13 @@ modelObjects:
   name: GuildController
   type: component
   parentId: app-guild
-  description: CRUD серверов и каналов
+  description: CRUD серверов
+
+- id: comp-guild-channel
+  name: ChannelController
+  type: component
+  parentId: app-guild
+  description: CRUD каналов (text/voice)
 
 - id: comp-guild-invite
   name: InviteController
@@ -422,11 +440,23 @@ modelObjects:
   parentId: app-messaging
   description: Проверка X-Idempotency-Key
 
+- id: comp-msg-outbox-writer
+  name: OutboxWriter
+  type: component
+  parentId: app-messaging
+  description: 'INSERT outbox_event в транзакции с message'
+
 - id: comp-msg-outbox
   name: OutboxWorker
   type: component
   parentId: app-messaging
   description: 'BackgroundService: poll outbox → Channel → broadcast'
+
+- id: comp-msg-broadcast
+  name: BroadcastConsumer
+  type: component
+  parentId: app-messaging
+  description: 'POST /internal/broadcast в WS Gateway (из OutboxWorker channel)'
 
 # --- Components: Voice Service ---
 - id: comp-voice-controller
@@ -530,11 +560,11 @@ modelConnections:
   description: SignalR WebSocket proxy
 
 - id: conn-nginx-zitadel
-  name: '/auth/*, /.well-known/*'
+  name: '/.well-known/, /oauth/, /oidc/, /ui/ → Zitadel'
   originId: app-nginx
   targetId: app-zitadel
   direction: outgoing
-  description: OIDC endpoints proxy
+  description: 'OIDC/SAML/Admin эндпоинты через grpc_pass (zitadel-api:8080). Login UI (/ui/v2/login) через proxy_pass (zitadel-login:3000).'
 
 # --- Inter-service ---
 - id: conn-wsgw-messaging
@@ -549,7 +579,7 @@ modelConnections:
   originId: app-ws-gateway
   targetId: app-guild
   direction: outgoing
-  description: 'GET /internal/channels/*/check-access (Retry + CB)'
+  description: 'GET /internal/channels/*/check-access + GET /internal/users/{userId}/guilds (Retry + CB)'
 
 - id: conn-messaging-guild
   name: HTTP (Polly)
@@ -579,6 +609,13 @@ modelConnections:
   direction: outgoing
   description: Создание/удаление комнат
 
+- id: conn-livekit-redis
+  name: Redis
+  originId: app-livekit
+  targetId: store-redis
+  direction: outgoing
+  description: Хранение состояния комнат и участников (room registry, participant tracking)
+
 - id: conn-guild-wsgw
   name: HTTP
   originId: app-guild
@@ -591,7 +628,7 @@ modelConnections:
   originId: app-guild
   targetId: app-voice
   direction: outgoing
-  description: 'DELETE /internal/voice/{userId}/disconnect (при бане)'
+  description: 'DELETE /internal/voice/{userId}/disconnect (при бане) + DELETE /internal/voice/channel/{channelId}/disconnect-all (при удалении канала/сервера)'
 
 - id: conn-voice-wsgw
   name: HTTP
@@ -623,12 +660,33 @@ modelConnections:
   description: Managed by Zitadel
 
 # --- Observability ---
-- id: conn-prometheus-services
+- id: conn-prometheus-wsgw
   name: Scrape /metrics
   originId: app-prometheus
   targetId: app-ws-gateway
   direction: outgoing
-  description: Все .NET сервисы
+  description: /metrics
+
+- id: conn-prometheus-guild
+  name: Scrape /metrics
+  originId: app-prometheus
+  targetId: app-guild
+  direction: outgoing
+  description: /metrics
+
+- id: conn-prometheus-messaging
+  name: Scrape /metrics
+  originId: app-prometheus
+  targetId: app-messaging
+  direction: outgoing
+  description: /metrics
+
+- id: conn-prometheus-voice
+  name: Scrape /metrics
+  originId: app-prometheus
+  targetId: app-voice
+  direction: outgoing
+  description: /metrics
 
 - id: conn-grafana-prometheus
   name: PromQL
@@ -647,14 +705,14 @@ modelConnections:
 ```
 1. Пользователь → React SPA: Нажимает "Войти"
 2. React SPA: oidc-client-ts создает Authorization Request
-   URL: /auth/oauth/v2/authorize?client_id=...&redirect_uri=...
+   URL: /oauth/v2/authorize?client_id=...&redirect_uri=...
         &response_type=code&scope=openid+profile+email&code_challenge=...
 3. React SPA → Nginx → Zitadel: браузер переходит на форму логина Zitadel (OIDC redirect)
 4. Пользователь: Вводит email + пароль (или регистрируется) на форме Zitadel
 5. Zitadel: Валидация → создание сессии
 6. Zitadel → React SPA: HTTP redirect на /callback?code=AUTH_CODE
 7. React SPA: oidc-client-ts обменивает code на tokens
-   POST /auth/oauth/v2/token (через Nginx → Zitadel)
+   POST /oauth/v2/token (через Nginx → Zitadel)
    Body: grant_type=authorization_code, code, code_verifier (PKCE)
 8. Zitadel → React SPA: { access_token (JWT), refresh_token, id_token }
 9. React SPA → Redux store: Сохранить access_token в памяти
@@ -669,7 +727,7 @@ modelConnections:
 2. React SPA → Nginx: POST /api/guilds { name } + Authorization: Bearer JWT
 3. Nginx: Проверяет rate limit, добавляет X-Request-Id
 4. Nginx → Guild Service: Proxy POST /api/guilds
-5. Guild Service: Валидация JWT (OIDC discovery → Zitadel)
+5. Guild Service: Валидация JWT (JWKS от zitadel-api:8080, загружается один раз при старте)
    Извлекает userId (sub), displayName (name), username(preferred_username) из claims
 6. Guild Service → PostgreSQL (guild schema):
    BEGIN
@@ -803,6 +861,10 @@ modelConnections:
    DELETE /internal/voice/X/disconnect
 9. Voice Service → LiveKit HTTP API: RemoveParticipant(identity=X)
 10. Voice Service → SessionStore: Удалить X из всех комнат гильда
+11. Voice Service → WS Gateway (HTTP):
+    POST /internal/broadcast { type: 'voice.left', userId, channelId }
+12. WS Gateway → React SPA (участники голосового канала, SignalR):
+    { type: 'voice.left', userId, channelId }
 ```
 
 ### Flow 7: Heartbeat и Presence
@@ -997,7 +1059,7 @@ modelConnections:
 
 1. React SPA (oidc-client-ts): таймер обнаружил, что access_token истекает
 2. React SPA (oidc-client-ts): создает скрытый <iframe>
-   src="/auth/oauth/v2/authorize?response_type=code&prompt=none
+   src="/oauth/v2/authorize?response_type=code&prompt=none
         &client_id=...&redirect_uri=...&code_challenge=...&scope=openid+profile+email"
 
 3. iframe → Nginx → Zitadel: запрос авторизации с prompt=none
@@ -1009,7 +1071,7 @@ modelConnections:
 5. iframe → React SPA (oidc-client-ts): сообщение через postMessage с NEW_CODE
 
 6. React SPA (oidc-client-ts) → Nginx → Zitadel:
-   POST /auth/oauth/v2/token
+   POST /oauth/v2/token
    Body: grant_type=authorization_code, code=NEW_CODE, code_verifier (PKCE)
 
 7. Zitadel → React SPA: { access_token (новый JWT), refresh_token, id_token }

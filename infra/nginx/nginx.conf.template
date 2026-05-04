@@ -1,0 +1,207 @@
+worker_processes auto;
+error_log /var/log/nginx/error.log warn;
+pid /var/run/nginx.pid;
+
+events {
+    worker_connections 1024;
+    use epoll;
+    multi_accept on;
+}
+
+http {
+    include /etc/nginx/mime.types;
+    default_type application/octet-stream;
+
+    log_format main '$remote_addr - $remote_user [$time_local] "$request" '
+                    '$status $body_bytes_sent "$http_referer" '
+                    '"$http_user_agent" "$http_x_forwarded_for" '
+                    'rt=$request_time uct="$upstream_connect_time" '
+                    'uht="$upstream_header_time" urt="$upstream_response_time"';
+
+    access_log /var/log/nginx/access.log main;
+
+    sendfile on;
+    tcp_nopush on;
+    tcp_nodelay on;
+    keepalive_timeout 65;
+    types_hash_max_size 2048;
+    client_max_body_size 10m;
+
+    client_body_buffer_size 128k;
+    client_header_buffer_size 1k;
+    large_client_header_buffers 4 4k;
+    output_buffers 1 32k;
+    postpone_output 1460;
+
+    gzip on;
+    gzip_vary on;
+    gzip_min_length 1024;
+    gzip_types text/plain text/css text/xml text/javascript 
+               application/json application/javascript application/xml+rss 
+               application/atom+xml image/svg+xml;
+
+    # Rate limiting
+    limit_req_zone $binary_remote_addr zone=api_limit:10m rate=100r/s;
+    limit_req_zone $binary_remote_addr zone=auth_limit:10m rate=20r/s;
+
+    upstream guild-service {
+        server guild-service:5001;
+        keepalive 32;
+    }
+
+    upstream messaging-service {
+        server messaging-service:5002;
+        keepalive 32;
+    }
+
+    upstream voice-service {
+        server voice-service:5003;
+        keepalive 32;
+    }
+
+    upstream websocket-gateway {
+        server websocket-gateway:5004;
+        keepalive 32;
+    }
+
+    upstream zitadel-api {
+        server zitadel-api:8080;
+        keepalive 32;
+    }
+
+    upstream zitadel-login {
+        server zitadel-login:3000;
+        keepalive 32;
+    }
+
+    server {
+        listen 80;
+        http2 on;
+        server_name ${ZITADEL_DOMAIN};
+
+        # Заголовки безопасности
+        proxy_set_header Host $http_host;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Request-Id $request_id;
+
+        proxy_http_version 1.1;
+        proxy_set_header Connection "";
+        proxy_buffering on;
+        proxy_buffer_size 4k;
+        proxy_buffers 8 16k;
+        proxy_busy_buffers_size 32k;
+
+        proxy_connect_timeout 30s;
+        proxy_send_timeout 30s;
+        proxy_read_timeout 30s;
+
+        location = / {
+            limit_req zone=auth_limit burst=10 nodelay;
+            add_header Cache-Control "no-store" always;
+            return 302 $scheme://$http_host/ui/v2/login/;
+        }
+
+        location /health {
+            access_log off;
+            return 200 '{"status":"healthy"}';
+            add_header Content-Type application/json;
+        }
+
+        # ^~ останавливает проверку regex при совпадении prefix:
+        # без него location ~ ^/(ui/|...) перехватывал бы /ui/v2/login
+        # и отправлял на grpc_pass вместо zitadel-login
+        location ^~ /ui/v2/login {
+            limit_req zone=auth_limit burst=10 nodelay;
+            proxy_pass http://zitadel-login;
+            proxy_set_header Host $http_host;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Real-IP $remote_addr;
+        }
+
+        location ^~ /.well-known/ {
+            grpc_pass grpc://zitadel-api;
+            grpc_set_header Host $http_host;
+        }
+
+        # Zitadel API
+        location ~ ^/(ui/|auth/|management/|admin/|system/|v2/|oidc/|openidconnect/|oauth/|saml/|debug/|zitadel\.) {
+            grpc_pass grpc://zitadel-api;
+            grpc_set_header Host $http_host;
+        }
+
+        location /api/guilds {
+            limit_req zone=api_limit burst=50 nodelay;
+            proxy_pass http://guild-service;
+
+            add_header X-Upstream-Service "guild-service" always;
+        }
+
+        location /api/invites {
+            limit_req zone=api_limit burst=50 nodelay;
+            proxy_pass http://guild-service;
+
+            add_header X-Upstream-Service "guild-service" always;
+        }
+
+        location /api/channels {
+            limit_req zone=api_limit burst=50 nodelay;
+            proxy_pass http://messaging-service;
+
+            add_header X-Upstream-Service "messaging-service" always;
+        }
+
+        location /api/messages {
+            limit_req zone=api_limit burst=50 nodelay;
+            proxy_pass http://messaging-service;
+
+            add_header X-Upstream-Service "messaging-service" always;
+        }
+
+        location /api/voice {
+            limit_req zone=api_limit burst=50 nodelay;
+            proxy_pass http://voice-service;
+
+            add_header X-Upstream-Service "voice-service" always;
+        }
+
+        location /ws {
+            limit_req zone=api_limit burst=100 nodelay;
+            proxy_pass http://websocket-gateway;
+            proxy_http_version 1.1;
+            proxy_set_header Host $http_host;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Request-Id $request_id;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection "upgrade";
+
+            proxy_connect_timeout 60s;
+            proxy_send_timeout 3600s;
+            proxy_read_timeout 3600s;
+
+            proxy_buffering off;
+
+            add_header X-Upstream-Service "websocket-gateway" always;
+        }
+
+        location /internal {
+            deny all;
+        }
+
+        error_page 404 =404 @not_found;
+        location @not_found {
+            default_type application/json;
+            return 404 '{"error":"Not Found"}';
+        }
+
+        error_page 500 502 503 504 =503 @server_error;
+        location @server_error {
+            default_type application/json;
+            return 503 '{"error":"Service Unavailable"}';
+        }
+    }
+}
