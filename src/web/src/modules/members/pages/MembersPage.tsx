@@ -1,22 +1,12 @@
-﻿import React, { useEffect, useState } from 'react'
+﻿import React, {useEffect} from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { GradientBackground } from '../../../shared/components/GradientBackground/GradientBackground'
 import { Icon } from '../../../shared/components/Icon/Icon'
 import styles from './MembersPage.module.scss'
-import { axiosInstance } from "../../../processes/axiosInstance"
 import {Member} from "../../../shared/types";
+import {banMemberThunk, fetchMembers, kickMemberThunk} from "../../../shared/slices/memberSlice.ts";
+import {useAppDispatch, useAppSelector} from "../../../store.ts";
 
-const USE_MOCK = import.meta.env.VITE_USE_AUTH_MOCK === 'true'
-
-// ===== MOCK STORAGE (важно: НЕ const внутри компонента)
-let mockMembers: Member[] = [
-  { id: '1', name: 'Иван', avatar: 'И', role: 'owner', username: '@ivan', userId: "1" },
-  { id: '2', name: 'Мария', avatar: 'М', role: 'admin', username: '@maria', userId: "2" },
-  { id: '3', name: 'Дмитрий', avatar: 'Д', role: 'admin', username: '@dmitry', userId: "3" },
-  { id: '4', name: 'Алексей', avatar: 'А', role: 'member', username: '@alexey', userId: "4" },
-  { id: '5', name: 'Светлана', avatar: 'С', role: 'member', username: '@svetlana', userId: "5" },
-  { id: '6', name: 'Максим', avatar: 'М', role: 'member', username: '@maxim', userId: "6" },
-]
 
 const getRoleLabel = (role: string) => {
   switch (role) {
@@ -28,60 +18,41 @@ const getRoleLabel = (role: string) => {
 
 export const MembersPage: React.FC = () => {
   const navigate = useNavigate()
+  const dispatch = useAppDispatch()
   const { serverId } = useParams()
 
-  const [members, setMembers] = useState<Member[]>([])
-  const [loading, setLoading] = useState(true)
+  const members = useAppSelector(
+      state => state.members.members[serverId || ''] || []
+  )
+  const loading = useAppSelector(state => state.members.loading)
 
-  // ===== LOAD =====
+
   useEffect(() => {
-    if (!serverId) return
-
-    const load = async () => {
-      setLoading(true)
-
-      if (USE_MOCK) {
-        await new Promise(r => setTimeout(r, 300))
-        setMembers(mockMembers)
-      } else {
-        const res = await axiosInstance.get(`/api/guilds/${serverId}/members`)
-        setMembers(res.data)
+      if (serverId) {
+        dispatch(fetchMembers(serverId))
       }
-
-      setLoading(false)
-    }
-
-    load()
   }, [serverId])
 
-  // ===== ACTIONS =====
   const handleKick = async (id: string, name: string) => {
     if (!window.confirm(`Исключить ${name}?`)) return
+    if (!serverId) return
 
-    if (USE_MOCK) {
-      mockMembers = mockMembers.filter(m => m.id !== id)
-      setMembers([...mockMembers])
-      return
-    }
-
-    await axiosInstance.post(`/api/guilds/${serverId}/members/${id}/kick`)
-    setMembers(prev => prev.filter(m => m.id !== id))
+    dispatch(kickMemberThunk({
+      serverId,
+      memberId: id
+    }))
   }
 
   const handleBan = async (id: string, name: string) => {
     if (!window.confirm(`Заблокировать ${name}?`)) return
+    if (!serverId) return
 
-    if (USE_MOCK) {
-      mockMembers = mockMembers.filter(m => m.id !== id)
-      setMembers([...mockMembers])
-      return
-    }
-
-    await axiosInstance.post(`/api/guilds/${serverId}/members/${id}/ban`)
-    setMembers(prev => prev.filter(m => m.id !== id))
+    dispatch(banMemberThunk({
+      serverId,
+      memberId: id
+    }))
   }
 
-  // ===== GROUPING =====
   const owners = members.filter(m => m.role === 'owner')
   const admins = members.filter(m => m.role === 'admin')
   const users = members.filter(m => m.role === 'member')
@@ -97,7 +68,7 @@ export const MembersPage: React.FC = () => {
           <div className={styles.card}>
             <div className={styles.header}>
               <button
-                  onClick={() => navigate(`/servers/${serverId}/channels/general`)}
+                  onClick={() => navigate(`/servers/${serverId}/channels`)}
                   className={styles.backBtn}
               >
                 <Icon name="arrow-left" size={20} />

@@ -1,5 +1,5 @@
 import {axiosInstance} from "../axiosInstance.ts";
-import {VoiceRoomInfo} from "../../shared/types/requestTypes.ts";
+import {VoiceRoomInfo} from "../../shared/types";
 
 export async function getAllActiveVoiceChannels(): Promise<VoiceRoomInfo[]> {
     try {

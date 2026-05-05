@@ -6,7 +6,7 @@ import {
     RoomParticipant,
     UseWebRTCConfig,
     UseWebRTCReturn
-} from "../types/webRtcTypes.ts";
+} from "../types";
 import {useCallback, useEffect, useRef, useState} from "react";
 import {io, Socket} from "socket.io-client";
 

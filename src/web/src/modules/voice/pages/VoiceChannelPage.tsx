@@ -20,7 +20,7 @@ export const VoiceChannelPage: React.FC = () => {
   useEffect(() => {
     if (!channelId || !user) return
 
-    voice.joinVoice(channelId, user.username)
+    voice.joinVoice(channelId, user.name)
 
     return () => {
       voice.leaveVoice(channelId)
@@ -31,7 +31,7 @@ export const VoiceChannelPage: React.FC = () => {
     if (channelId) {
       voice.leaveVoice(channelId)
     }
-    navigate(`/servers/${serverId}/channels/general`)
+    navigate(`/servers/${serverId}/channels`)
   }
 
   const participantsWithCurrent = user
@@ -39,8 +39,8 @@ export const VoiceChannelPage: React.FC = () => {
         ...voice.participants,
         {
           id: user.id,
-          name: user.username,
-          avatar: user.username[0].toUpperCase(),
+          name: user.name,
+          avatar: user.name[0].toUpperCase(),
           isSpeaking: false,
           isMuted: voice.isMuted,
           isCurrentUser: true,

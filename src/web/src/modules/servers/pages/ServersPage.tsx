@@ -13,6 +13,7 @@ export const ServersPage: React.FC = () => {
 
     const user = useAppSelector(selectUser)
     const servers = useAppSelector(selectServers)
+
     const isLoading = useAppSelector(selectServersLoading)
 
     const isAuthenticated = useAppSelector(selectIsAuthenticated)

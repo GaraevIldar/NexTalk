@@ -1,16 +1,17 @@
-// useVoice.ts
 import { useState } from 'react'
 import { useWebRTC } from "./useWerbRtc.ts"
-import { axiosInstance } from "../../processes/axiosInstance.ts"
+import { joinVoiceChannel } from "../../processes/voice/joinVoiceChannel.ts"
+import { leaveVoiceChannel } from "../../processes/voice/leaveVoiceChannel.ts"
+import { getVoiceChannelParticipants } from "../../processes/voice/getVoiceChannelParticipants.ts"
 
 const USE_MOCK = import.meta.env.VITE_USE_AUTH_MOCK === 'true'
 
 export const useVoice = () => {
     const webrtc = useWebRTC({
+        signalingServerUrl: 'http://localhost:3001',
         iceServers: [
             { urls: 'stun:stun.l.google.com:19302' },
-        ],
-        signalingServerUrl: 'http://localhost:3001'
+        ]
     })
 
     // ===== MOCK STATE =====
@@ -18,8 +19,14 @@ export const useVoice = () => {
     const [mockMuted, setMockMuted] = useState(false)
     const [mockParticipants, setMockParticipants] = useState<any[]>([])
 
+    // ===== REAL STATE =====
+    const [participants, setParticipants] = useState<any[]>([])
+
     // ===== JOIN =====
-    const joinVoice = async (channelId: string, username: string) => {
+    const joinVoice = async (
+            channelId: string,
+            user: { id: string; name: string }
+        ) => {
         if (USE_MOCK) {
             setMockConnected(true)
 
@@ -31,21 +38,42 @@ export const useVoice = () => {
             return
         }
 
-        const res = await axiosInstance.post(`/api/voice/${channelId}/join`)
-        const { token, url } = res.data
+        // 1. JOIN API
+        await joinVoiceChannel(channelId, {
+            userId: user.id,
+            username: user.name,
+            displayName: user.name,
+        })
 
-        console.log('Connect to LiveKit:', token, url)
+        // 2. GET PARTICIPANTS
+        const users = await getVoiceChannelParticipants(channelId)
+
+        setParticipants(
+            users.map(u => ({
+                id: u.userId,
+                name: u.username,
+                avatar: u.username[0].toUpperCase(),
+                isSpeaking: false,
+                isMuted: false,
+            }))
+        )
+
+        // 3. WEBRTC
+        await webrtc.joinRoom(channelId, user.name)
+        await webrtc.startVoice()
     }
 
     // ===== LEAVE =====
-    const leaveVoice = async (channelId: string) => {
+    const leaveVoice = async (channelId: string, userId?: string) => {
         if (USE_MOCK) {
             setMockConnected(false)
             setMockParticipants([])
             return
         }
 
-        await axiosInstance.post(`/api/voice/${channelId}/leave`)
+        await leaveVoiceChannel(channelId, userId || '')
+        webrtc.stopVoice()
+        setParticipants([])
     }
 
     // ===== MIC =====
@@ -72,9 +100,12 @@ export const useVoice = () => {
     }
 
     return {
-        ...webrtc,
         isConnected: webrtc.connectionStatus === 'connected',
+        isMuted: webrtc.isMuted,
+        participants,
+
         joinVoice,
         leaveVoice,
+        toggleMic,
     }
 }

@@ -1,5 +1,5 @@
 import {axiosInstance} from "../axiosInstance.ts";
-import {JoinRequest, JoinVoiceResponse} from "../../shared/types/requestTypes.ts";
+import {JoinRequest, JoinVoiceResponse} from "../../shared/types";
 
 export async function joinVoiceChannel(
     channelId: string,

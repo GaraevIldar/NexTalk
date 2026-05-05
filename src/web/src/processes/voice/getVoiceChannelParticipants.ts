@@ -1,5 +1,5 @@
 import {axiosInstance} from "../axiosInstance.ts";
-import {VoiceParticipant} from "../../shared/types/requestTypes.ts";
+import {VoiceParticipant} from "../../shared/types";
 
 export async function getVoiceChannelParticipants(
     channelId: string

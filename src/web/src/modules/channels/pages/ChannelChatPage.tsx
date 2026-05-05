@@ -71,7 +71,7 @@ export const ChannelChatPage: React.FC = () => {
                     <div className={styles.notFound}>
                         <Icon name="message" size={48} />
                         <p>Выберите канал</p>
-                        <Button variant="secondary" onClick={() => navigate(-1)}>
+                        <Button variant="secondary" onClick={() => navigate('./../..')}>
                             Вернуться назад
                         </Button>
                     </div>

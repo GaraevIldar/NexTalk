@@ -70,7 +70,8 @@ const chatSlice = createSlice({
     extraReducers: builder => {
         builder.addCase(fetchMessages.fulfilled, (state, action) => {
             const channelId = action.meta.arg
-            state.messages[channelId] = action.payload
+
+            state.messages[channelId] = [...action.payload]
         })
     }
 })

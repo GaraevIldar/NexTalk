@@ -4,6 +4,8 @@ import authReducer from './shared/slices/authSlice.ts'
 import serverReducer from './shared/slices/serverSlice.ts'
 import channelReducer from './shared/slices/channelSlice.ts'
 import chatReducer from './shared/slices/chatSlice.ts'
+import membersReducer from './shared/slices/memberSlice.ts'
+import inviteReducer from './shared/slices/inviteSlice.ts'
 
 export const store = configureStore({
     reducer: {
@@ -11,6 +13,8 @@ export const store = configureStore({
         servers: serverReducer,
         channels: channelReducer,
         chat: chatReducer,
+        members: membersReducer,
+        invite: inviteReducer,
     },
     middleware: (getDefaultMiddleware) =>
         getDefaultMiddleware({
