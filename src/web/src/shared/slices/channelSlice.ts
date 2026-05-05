@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit'
-import { axiosInstance } from '../../../processes/axiosInstance'
+import { axiosInstance } from '../../processes/axiosInstance.ts'
 
 export interface Channel {
     id: string

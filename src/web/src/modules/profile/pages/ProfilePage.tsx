@@ -1,15 +1,23 @@
-﻿import React from 'react'
+﻿import React, {useEffect} from 'react'
 import { useNavigate } from 'react-router-dom'
-import { selectUser, logout } from '../../auth/stores/authSlice'
+import { selectUser, logout } from '../../../shared/slices/authSlice.ts'
 import { GradientBackground } from '../../../shared/components/GradientBackground/GradientBackground'
 import { ProfileCard } from "../components/ProfileCard"
 import styles from './ProfilePage.module.scss'
 import {useAppDispatch, useAppSelector} from "../../../store.ts";
+import {fetchServers, selectServers} from "../../../shared/slices/serverSlice.ts";
 
 export const ProfilePage: React.FC = () => {
     const navigate = useNavigate()
     const dispatch = useAppDispatch()
     const user = useAppSelector(selectUser)
+    const servers = useAppSelector(selectServers)
+
+    useEffect(() => {
+        dispatch(fetchServers())
+    }, [])
+
+    const serversCount = servers.length
 
     const handleLogout = async () => {
         await dispatch(logout())
@@ -20,8 +28,8 @@ export const ProfilePage: React.FC = () => {
         console.log('Edit profile')
     }
 
-    const formatCreatedAt = () => {
-        return new Date('2026-04-20')
+    const formatCreatedAt = (date: Date | undefined): Date => {
+        return date || new Date('2026-04-20')
     }
 
     return (
@@ -32,9 +40,8 @@ export const ProfilePage: React.FC = () => {
                         id: user?.id || '1',
                         name: user?.name || 'User',
                         nickname: user?.nickname || 'user',
-                        createdAt: formatCreatedAt(),
-                        serversCount: 3, // TODO: получать из serverSlice
-                        status: 'online', // TODO: получать из presence service
+                        createdAt: formatCreatedAt(user?.createdAt),
+                        serversCount: serversCount,
                     }}
                     onEdit={handleEdit}
                     onLogout={handleLogout}

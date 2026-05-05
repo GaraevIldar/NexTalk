@@ -6,7 +6,7 @@ import { VoiceControls } from '../components/VoiceControls'
 import { VoiceParticipantList } from '../components/VoiceParticipantList'
 import styles from './VoiceChannelPage.module.scss'
 import { useAppSelector } from "../../../store.ts"
-import { selectUser } from "../../auth/stores/authSlice.ts"
+import { selectUser } from "../../../shared/slices/authSlice.ts"
 import {useVoice} from "../../../shared/hooks/useVoice.ts";
 
 export const VoiceChannelPage: React.FC = () => {

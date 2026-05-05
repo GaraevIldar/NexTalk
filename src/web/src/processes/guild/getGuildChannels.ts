@@ -1,5 +1,5 @@
 import {axiosInstance} from "../axiosInstance.ts";
-import {Channel} from "../../shared/types/requestTypes.ts";
+import {Channel} from "../../shared/types";
 
 export async function getGuildChannels(guildId: string): Promise<Channel[]> {
     try {

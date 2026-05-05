@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { handleAuthCallback, selectIsLoading } from '../stores/authSlice'
+import { handleAuthCallback, selectIsLoading } from '../../../shared/slices/authSlice.ts'
 import { GradientBackground } from '../../../shared/components/GradientBackground/GradientBackground'
 import styles from './OidcCallback.module.scss'
 import {useAppDispatch, useAppSelector} from "../../../store.ts";

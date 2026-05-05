@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { fetchServers, selectServers, selectServersLoading, setCurrentServer } from '../stores/serverSlice'
-import {selectIsAuthenticated, selectUser} from '../../auth/stores/authSlice'
+import { fetchServers, selectServers, selectServersLoading, setCurrentServer } from '../../../shared/slices/serverSlice.ts'
+import {selectIsAuthenticated, selectUser} from '../../../shared/slices/authSlice.ts'
 import { ServerCard } from '../components/ServerCard'
 import { GradientBackground } from '../../../shared/components/GradientBackground/GradientBackground'
 import styles from './ServersPage.module.scss'
@@ -31,7 +31,7 @@ export const ServersPage: React.FC = () => {
         const server = servers.find(s => s.id === serverId)
         if (server) {
             dispatch(setCurrentServer(server))
-            navigate(`/servers/${serverId}/channels/1`)
+            navigate(`/servers/${serverId}/channels`)
         }
     }
 

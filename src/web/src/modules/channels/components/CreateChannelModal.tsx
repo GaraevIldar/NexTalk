@@ -4,7 +4,7 @@ import { Button } from '../../../shared/components/Button/Button'
 import { Input } from '../../../shared/components/Input/Input'
 import { Icon } from '../../../shared/components/Icon/Icon'
 import styles from './CreateChannelModal.module.scss'
-import { createChannel } from '../stores/channelSlice'
+import { createChannel } from '../../../shared/slices/channelSlice.ts'
 import { useAppDispatch } from '../../../store'
 
 interface CreateChannelModalProps {

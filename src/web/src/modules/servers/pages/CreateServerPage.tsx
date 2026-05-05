@@ -6,7 +6,7 @@ import { GradientBackground } from '../../../shared/components/GradientBackgroun
 import { Icon } from '../../../shared/components/Icon/Icon'
 import styles from './CreateServerPage.module.scss'
 import {createGuild} from "../../../processes/guild/createGuild.ts";
-import {createServer} from "../stores/serverSlice.ts";
+import {createServer} from "../../../shared/slices/serverSlice.ts";
 import {useAppDispatch} from "../../../store.ts";
 
 const SERVER_TYPES = [

@@ -1,6 +1,6 @@
 import React from 'react'
 import styles from './ServerCard.module.scss'
-import {Guild} from "../../../shared/types/requestTypes.ts";
+import {Guild} from "../../../shared/types";
 
 interface ServerCardProps {
     server: Guild

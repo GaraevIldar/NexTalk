@@ -45,7 +45,7 @@ export interface CreateGuildRequest {
 
 export interface CreateChannelRequest {
     name: string
-    type: 'text' | 'voice' | 'announcement'
+    type: 'text' | 'voice'
 }
 
 export interface CreateInviteRequest {
@@ -89,8 +89,8 @@ export interface MessageAttachment {
 
 export interface GetMessagesRequest {
     channelId: string
-    cursor?: string            // messageId для пагинации
-    limit?: number             // по умолчанию 50, максимум 100
+    cursor?: string
+    limit?: number
     direction?: 'before' | 'after' | 'around'
 }
 
@@ -136,11 +136,11 @@ export interface IdempotencyKey {
 }
 
 export interface JoinVoiceResponse {
-    token: string              // JWT токен для LiveKit
-    roomName: string           // Название комнаты (guildId-channelId)
-    wsUrl: string              // WebSocket URL для LiveKit
-    participantId: string      // userId
-    participantName: string    // displayName
+    token: string
+    roomName: string
+    wsUrl: string
+    participantId: string
+    participantName: string
     joinAt: Date
 }
 
@@ -152,7 +152,6 @@ export interface VoiceParticipant {
     joinedAt: Date
     isMuted: boolean
     isDeafened: boolean
-    speakingLevel: number      // 0-100
 }
 
 export interface VoiceRoomInfo {
@@ -168,8 +167,8 @@ export interface JoinRequest {
     username: string
     displayName: string
     avatar?: string
-    mute?: boolean               // Присоединиться в режиме "заглушен"
-    deaf?: boolean               // Присоединиться в режиме "глухой"
+    mute?: boolean
+    deaf?: boolean
 }
 
 export interface LeaveRequest {

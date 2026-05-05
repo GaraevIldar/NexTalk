@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react'
-import {login, selectIsLoading, selectAuthError, selectIsAuthenticated, register} from '../stores/authSlice'
+import {login, selectIsLoading, selectAuthError, selectIsAuthenticated, register} from '../../../shared/slices/authSlice.ts'
 import { GradientBackground } from '../../../shared/components/GradientBackground/GradientBackground'
 import { AuthCard } from '../components/AuthCard'
 import styles from './AuthPage.module.scss'

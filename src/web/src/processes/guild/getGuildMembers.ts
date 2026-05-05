@@ -1,5 +1,5 @@
 import {axiosInstance} from "../axiosInstance.ts";
-import {Member} from "../../shared/types/requestTypes.ts";
+import {Member} from "../../shared/types";
 
 export async function getGuildMembers(guildId: string): Promise<Member[]> {
     try {

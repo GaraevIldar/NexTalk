@@ -4,7 +4,7 @@ import { GradientBackground } from '../../../shared/components/GradientBackgroun
 import { Icon } from '../../../shared/components/Icon/Icon'
 import styles from './MembersPage.module.scss'
 import { axiosInstance } from "../../../processes/axiosInstance"
-import {Member} from "../../../shared/types/requestTypes.ts";
+import {Member} from "../../../shared/types";
 
 const USE_MOCK = import.meta.env.VITE_USE_AUTH_MOCK === 'true'
 

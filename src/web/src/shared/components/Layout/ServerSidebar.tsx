@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import styles from './ServerSidebar.module.scss'
 import {ServerIcon} from "../../../modules/servers/components/ServerIcon/ServerIcon.tsx";
 import {useAppDispatch, useAppSelector} from "../../../store.ts";
-import {selectServers, setCurrentServer} from "../../../modules/servers/stores/serverSlice.ts";
+import {selectServers, setCurrentServer} from "../../slices/serverSlice.ts";
 
 const getServerType = (name: string): 'game' | 'dev' | 'music' | 'study' | 'friends' | 'default' => {
     const lowerName = name.toLowerCase()
@@ -26,7 +26,7 @@ export const ServerSidebar: React.FC = () => {
         if (!server) return
 
         dispatch(setCurrentServer(server))
-        navigate(`/servers/${id}/channels/general`)
+        navigate(`/servers/${id}/channels`)
     }
 
     return (

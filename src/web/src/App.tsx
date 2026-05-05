@@ -13,7 +13,7 @@ import { AuthPage } from './modules/auth/pages/AuthPage'
 import {store, useAppSelector} from "./store.ts";
 import {Provider} from "react-redux";
 import React from "react";
-import {selectIsAuthenticated, selectIsLoading} from "./modules/auth/stores/authSlice.ts";
+import {selectIsAuthenticated, selectIsLoading} from "./shared/slices/authSlice.ts";
 
 export const ProtectedRoute: React.FC = () => {
     const isAuth = useAppSelector(selectIsAuthenticated)
@@ -39,6 +39,7 @@ function App() {
 
                     <Route element={<ProtectedRoute />}>
                         <Route path="/servers" element={<ServersPage />} />
+                        <Route path="/servers/:serverId/channels" element={<ChannelChatPage />} />
                         <Route path="/servers/:serverId/channels/:channelId" element={<ChannelChatPage />} />
                         <Route path="/servers/:serverId/voice/:channelId" element={<VoiceChannelPage />} />
                         <Route path="/create-server" element={<CreateServerPage />} />

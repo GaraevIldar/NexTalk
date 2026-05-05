@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { logout, refreshToken, selectAccessToken } from "../modules/auth/stores/authSlice.ts"
+import { logout, refreshToken, selectAccessToken } from "../shared/slices/authSlice.ts"
 
 // 👇 вместо прямого импорта store
 let _store: any = null

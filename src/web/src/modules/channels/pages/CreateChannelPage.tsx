@@ -5,7 +5,7 @@ import { Input } from '../../../shared/components/Input/Input'
 import { GradientBackground } from '../../../shared/components/GradientBackground/GradientBackground'
 import styles from './CreateChannelPage.module.scss'
 import {Icon} from "../../../shared/components/Icon/Icon.tsx";
-import { createChannel } from '../stores/channelSlice'
+import { createChannel } from '../../../shared/slices/channelSlice.ts'
 import { useAppDispatch } from '../../../store'
 
 export const CreateChannelPage: React.FC = () => {

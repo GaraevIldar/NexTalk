@@ -1,9 +1,9 @@
 import { configureStore } from '@reduxjs/toolkit'
 import { useDispatch, useSelector, TypedUseSelectorHook } from 'react-redux'
-import authReducer from './modules/auth/stores/authSlice'
-import serverReducer from './modules/servers/stores/serverSlice'
-import channelReducer from './modules/channels/stores/channelSlice'
-import chatReducer from './modules/chat/stores/chatSlice'
+import authReducer from './shared/slices/authSlice.ts'
+import serverReducer from './shared/slices/serverSlice.ts'
+import channelReducer from './shared/slices/channelSlice.ts'
+import chatReducer from './shared/slices/chatSlice.ts'
 
 export const store = configureStore({
     reducer: {

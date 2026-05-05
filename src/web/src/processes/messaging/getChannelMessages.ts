@@ -1,5 +1,5 @@
 import {axiosInstance} from "../axiosInstance.ts";
-import {GetMessagesResponse} from "../../shared/types/requestTypes.ts";
+import {GetMessagesResponse} from "../../shared/types";
 
 export async function getChannelMessages(
     channelId: string,

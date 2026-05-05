@@ -1,7 +1,7 @@
 import {createAsyncThunk, createSlice, PayloadAction} from '@reduxjs/toolkit'
-import {CreateGuildRequest, Guild} from "../../../shared/types/requestTypes.ts";
-import {getUserGuilds} from "../../../processes/guild/getUserGuilds.ts";
-import {createGuild} from "../../../processes/guild/createGuild.ts";
+import {CreateGuildRequest, Guild} from "../types";
+import {getUserGuilds} from "../../processes/guild/getUserGuilds.ts";
+import {createGuild} from "../../processes/guild/createGuild.ts";
 
 interface ServerState {
     servers: Guild[]

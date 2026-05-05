@@ -7,7 +7,7 @@ import { useAppDispatch, useAppSelector } from '../../../store'
 import {
     fetchChannels,
     setCurrentChannel
-} from '../stores/channelSlice'
+} from '../../../shared/slices/channelSlice.ts'
 
 export const ChannelSidebar: React.FC = () => {
     const navigate = useNavigate()
@@ -41,9 +41,16 @@ export const ChannelSidebar: React.FC = () => {
         <>
             <div className={styles.sidebar}>
                 <div className={styles.serverHeader}>
-                    <div className={styles.serverTitle}>
+                    <span className={styles.serverTitle}>
                         Каналы
-                    </div>
+                    </span>
+                    <span
+                        className={styles.addChannel}
+                        onClick={() => setIsModalOpen(true)}
+                    >
+                        <Icon name="plus" size={14} />
+                        <span>Добавить канал</span>
+                    </span>
                 </div>
 
                 <div className={styles.section}>
@@ -59,14 +66,6 @@ export const ChannelSidebar: React.FC = () => {
                             <span>{channel.name}</span>
                         </div>
                     ))}
-
-                    <div
-                        className={styles.addChannel}
-                        onClick={() => setIsModalOpen(true)}
-                    >
-                        <Icon name="plus" size={14} />
-                        <span>Добавить канал</span>
-                    </div>
                 </div>
 
                 <div className={styles.section}>

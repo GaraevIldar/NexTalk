@@ -1,7 +1,7 @@
 import * as signalR from '@microsoft/signalr'
 import {store} from "../../../store.ts";
-import {selectAccessToken} from "../../auth/stores/authSlice.ts";
-import {sendMessageLocal} from "../stores/chatSlice.ts";
+import {selectAccessToken} from "../../../shared/slices/authSlice.ts";
+import {sendMessageLocal} from "../../../shared/slices/chatSlice.ts";
 
 class SignalRClient {
     private connection: signalR.HubConnection | null = null
