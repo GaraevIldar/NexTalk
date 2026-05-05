@@ -188,10 +188,10 @@ kubectl exec -n nextalk deploy/guild-service -- curl -s http://localhost:5001/re
 kubectl logs -n nextalk -l app=guild-service --all-containers --follow
 
 # Пример лога (позитивный — запрос выполнен):
-# {"@t":"2024-01-01T12:00:00.000Z","@mt":"HTTP GET /api/guilds responded 200 in 12.3ms","CorrelationId":"req-abc","MachineName":"guild-service-7d4b-xk9p",...}
+# {"@t":"2026-01-01T12:00:00.000Z","@mt":"HTTP GET /api/guilds responded 200 in 12.3ms","CorrelationId":"req-abc","MachineName":"guild-service-7d4b-xk9p",...}
 
 # Пример лога (негативный — ошибка):
-# {"@t":"2024-01-01T12:00:01.000Z","@l":"Error","@mt":"Unhandled exception","@x":"System.Exception: ...","MachineName":"guild-service-7d4b-xk9p",...}
+# {"@t":"2026-01-01T12:00:01.000Z","@l":"Error","@mt":"Unhandled exception","@x":"System.Exception: ...","MachineName":"guild-service-7d4b-xk9p",...}
 ```
 
 ---
