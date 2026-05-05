@@ -1,0 +1,58 @@
+# -----------------------------------------------------------------------
+# Global
+# -----------------------------------------------------------------------
+namespace: nextalk
+
+# -----------------------------------------------------------------------
+# Zitadel (OIDC identity provider)
+# -----------------------------------------------------------------------
+zitadel:
+  domain: "localhost"
+  externalPort: "80"
+  # Must be exactly 32 characters
+  masterkey: "MasterkeyNeedsToHave32Characters"
+
+# -----------------------------------------------------------------------
+# PostgreSQL
+# -----------------------------------------------------------------------
+postgres:
+  user: "postgres"
+  password: "postgres"
+  db: "nextalk"
+
+# -----------------------------------------------------------------------
+# LiveKit (voice/video SFU)
+# -----------------------------------------------------------------------
+livekit:
+  apiKey: "devkey"
+  secretKey: "devsecret"
+
+# -----------------------------------------------------------------------
+# Grafana
+# -----------------------------------------------------------------------
+grafana:
+  adminUser: "admin"
+  adminPassword: "admin"
+
+# -----------------------------------------------------------------------
+# Application services
+# -----------------------------------------------------------------------
+guildService:
+  replicas: 2                             # 2 replicas share Redis cache (SRE requirement)
+  image: "nextalk/guild-service:latest"
+  imagePullPolicy: IfNotPresent
+
+messagingService:
+  replicas: 1
+  image: "nextalk/messaging-service:latest"
+  imagePullPolicy: IfNotPresent
+
+voiceService:
+  replicas: 1
+  image: "nextalk/voice-service:latest"
+  imagePullPolicy: IfNotPresent
+
+websocketGateway:
+  replicas: 1
+  image: "nextalk/websocket-gateway:latest"
+  imagePullPolicy: IfNotPresent

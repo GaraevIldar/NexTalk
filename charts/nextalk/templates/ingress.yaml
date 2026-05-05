@@ -1,0 +1,80 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: nextalk
+  namespace: {{ .Values.namespace }}
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      proxy_set_header X-Request-Id $request_id;
+spec:
+  ingressClassName: nginx
+  rules:
+    - http:
+        paths:
+          - path: /api/guilds
+            pathType: Prefix
+            backend:
+              service:
+                name: guild-service
+                port:
+                  number: 5001
+          - path: /api/invites
+            pathType: Prefix
+            backend:
+              service:
+                name: guild-service
+                port:
+                  number: 5001
+          - path: /api/channels
+            pathType: Prefix
+            backend:
+              service:
+                name: messaging-service
+                port:
+                  number: 5002
+          - path: /api/messages
+            pathType: Prefix
+            backend:
+              service:
+                name: messaging-service
+                port:
+                  number: 5002
+          - path: /api/voice
+            pathType: Prefix
+            backend:
+              service:
+                name: voice-service
+                port:
+                  number: 5003
+          - path: /ws
+            pathType: Prefix
+            backend:
+              service:
+                name: websocket-gateway
+                port:
+                  number: 5004
+          - path: /monitoring/grafana
+            pathType: Prefix
+            backend:
+              service:
+                name: grafana
+                port:
+                  number: 3000
+          - path: /ui/v2/login
+            pathType: Prefix
+            backend:
+              service:
+                name: zitadel
+                port:
+                  number: 3000
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: zitadel
+                port:
+                  number: 8080

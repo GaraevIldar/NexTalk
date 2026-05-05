@@ -1,0 +1,6 @@
+apiVersion: v2
+name: nextalk
+description: NexTalk – real-time messaging platform (SRE course demo)
+type: application
+version: 0.1.0
+appVersion: "latest"
