@@ -80,11 +80,36 @@ spec:
                   key: ZITADEL_EXTERNALSECURE
             - name: ZITADEL_TLS_ENABLED
               value: "false"
-            - name: ZITADEL_DATABASE_POSTGRES_DSN
+            - name: ZITADEL_DATABASE_POSTGRES_HOST
+              value: postgres
+            - name: ZITADEL_DATABASE_POSTGRES_PORT
+              value: "5432"
+            - name: ZITADEL_DATABASE_POSTGRES_DATABASE
+              value: zitadel
+            - name: ZITADEL_DATABASE_POSTGRES_USER_USERNAME
               valueFrom:
                 secretKeyRef:
                   name: nextalk-secrets
-                  key: postgres-dsn-zitadel
+                  key: postgres-user
+            - name: ZITADEL_DATABASE_POSTGRES_USER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: nextalk-secrets
+                  key: postgres-password
+            - name: ZITADEL_DATABASE_POSTGRES_USER_SSL_MODE
+              value: disable
+            - name: ZITADEL_DATABASE_POSTGRES_ADMIN_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: nextalk-secrets
+                  key: postgres-user
+            - name: ZITADEL_DATABASE_POSTGRES_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: nextalk-secrets
+                  key: postgres-password
+            - name: ZITADEL_DATABASE_POSTGRES_ADMIN_SSL_MODE
+              value: disable
             - name: ZITADEL_FIRSTINSTANCE_ORG_HUMAN_PASSWORDCHANGEREQUIRED
               value: "false"
             - name: ZITADEL_FIRSTINSTANCE_LOGINCLIENTPATPATH
