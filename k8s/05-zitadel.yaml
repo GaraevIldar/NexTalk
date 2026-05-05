@@ -42,6 +42,8 @@ spec:
           image: ghcr.io/zitadel/zitadel:v4.13.1
           args:
             - start-from-init
+            - --masterkey
+            - $(ZITADEL_MASTERKEY)
           ports:
             - containerPort: 8080
               name: api
