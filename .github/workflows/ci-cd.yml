@@ -1,17 +1,50 @@
-name: CD
+name: CI / CD
 
 on:
   push:
-    branches:
-      - main
-      - sre/k8s-manifests
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
 
 env:
   REGISTRY: ghcr.io
   IMAGE_PREFIX: ghcr.io/${{ github.repository_owner }}/nextalk
 
 jobs:
+  # ── Build & test (every branch, every PR) ────────────────────────────
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - name: guild-service
+            project: src/guild-service/NexTalk.Guild.Service/NexTalk.Guild.Service.csproj
+          - name: messaging-service
+            project: src/messaging-service/NexTalk.Messaging.Service/NexTalk.Messaging.Service.csproj
+          - name: voice-service
+            project: src/voice-service/NexTalk.Voice.Service/NexTalk.Voice.Service.csproj
+          - name: websocket-gateway
+            project: src/websocket-gateway/NextTalk.Websocket.Gateway/NextTalk.Websocket.Gateway.csproj
+
+    name: Build ${{ matrix.name }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Restore
+        run: dotnet restore ${{ matrix.project }}
+
+      - name: Build
+        run: dotnet build ${{ matrix.project }} -c Release --no-restore
+
+  # ── Docker build & push (only after build passes, only on target branches) ──
   docker:
+    needs: build
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/sre/k8s-manifests')
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -23,21 +56,17 @@ jobs:
           - name: guild-service
             context: src/guild-service
             image: guild-service
-            port: 5001
           - name: messaging-service
             context: src/messaging-service
             image: messaging-service
-            port: 5002
           - name: voice-service
             context: src/voice-service
             image: voice-service
-            port: 5003
           - name: websocket-gateway
             context: src/websocket-gateway
             image: websocket-gateway
-            port: 5004
 
-    name: Build & push ${{ matrix.name }}
+    name: Docker ${{ matrix.name }}
     steps:
       - uses: actions/checkout@v4
 
