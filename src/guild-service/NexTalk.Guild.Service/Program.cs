@@ -36,4 +36,31 @@ app.MapHealthChecks("/readyz", new HealthCheckOptions
 });
 app.MapMetrics();
 
+// Redis distributed cache demo — satisfies SRE requirement:
+// multiple guild-service replicas share the same Redis db=1.
+//
+// Positive case (cache hit):  key exists → returns cached value from Redis.
+// Negative case (cache miss): key absent → origin computes value, stores in Redis,
+//                              next request (even on another pod) gets cache hit.
+app.MapGet("/api/guilds/probe", async (IDistributedCache cache, ILogger<Program> logger) =>
+{
+    const string key = "guild:probe";
+
+    var cached = await cache.GetStringAsync(key);
+    if (cached is not null)
+    {
+        logger.LogInformation("Cache hit for key {Key}: {Value}", key, cached);
+        return Results.Ok(new { source = "cache", value = cached });
+    }
+
+    var value = $"set by {Environment.MachineName} at {DateTime.UtcNow:O}";
+    await cache.SetStringAsync(key, value, new DistributedCacheEntryOptions
+    {
+        AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(30)
+    });
+
+    logger.LogInformation("Cache miss for key {Key}, stored by {Instance}", key, Environment.MachineName);
+    return Results.Ok(new { source = "origin", value });
+});
+
 app.Run();
