@@ -7,8 +7,7 @@ spec:
   project: nextalk
 
   source:
-    # TODO: replace with your actual git repository URL
-    repoURL: https://github.com/YOUR_ORG/NexTalk.git
+    repoURL: https://github.com/GaraevIldar/NexTalk.git
     targetRevision: sre/k8s-manifests
     path: charts/nextalk
     helm:

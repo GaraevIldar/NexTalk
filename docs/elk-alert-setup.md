@@ -1,43 +1,45 @@
-# Elastic Alert Setup — Error Log Email Notification
+# Настройка оповещений в Elastic - Уведомления об ошибках на Email
 
-Kibana Stack Management → Rules → Create rule.  
-UI path (after cluster is up): `http://<node-ip>/monitoring/kibana`
-
----
-
-## Prerequisites
-
-- ELK stack deployed (`k8s/14-elasticsearch.yaml`, `k8s/15-kibana.yaml`, `k8s/16-filebeat.yaml`)
-- Logs flowing into index `nextalk-logs-*` (verify via **Discover**)
-- SMTP server accessible from the Kibana pod
+**Путь в интерфейсе:** Kibana → Stack Management → Rules → Create rule.  
+После поднятия кластера интерфейс доступен по адресу: `http://<node-ip>/monitoring/kibana`
 
 ---
 
-## Step 1 — Configure email connector
+## Предварительные требования
 
-1. Open **Stack Management → Connectors → Create connector**
-2. Select **Email**
-3. Fill in:
-   | Field | Value |
+- ELK-стек развернут в кластере (`k8s/14-elasticsearch.yaml`, `k8s/15-kibana.yaml`, `k8s/16-filebeat.yaml`)
+- Логи текут в индекс `nextalk-logs-*` (посмотреть можно через **Discover**)
+- SMTP-сервер доступен из пода Kibana
+
+---
+
+## Шаг 1 - Настройка почтового коннектора
+
+1. Открой **Stack Management → Connectors → Create connector**
+2. Выбери тип **Email**
+3. Заполни поля:
+
+   | Поле | Значение |
    |---|---|
    | Name | `SMTP Alert` |
-   | Host | `<smtp-host>` |
+   | Host | `<smtp-хост>` |
    | Port | `587` |
    | Secure | TLS |
-   | Username | `<smtp-user>` |
-   | Password | `<smtp-password>` |
-   | From | `alerts@<your-domain>` |
-4. Click **Test** → **Save**
+   | Username | `<smtp-пользователь>` |
+   | Password | `<smtp-пароль>` |
+   | From | `alerts@<твой-домен>` |
+
+4. Нажми **Test** → **Save**
 
 ---
 
-## Step 2 — Create the alert rule
+## Шаг 2 - Создание правила оповещения
 
-1. Open **Stack Management → Rules → Create rule**
-2. Select rule type: **Elasticsearch query**
-3. Configure:
+1. Открой **Stack Management → Rules → Create rule**
+2. Выбери тип правила: **Elasticsearch query**
+3. Настрой параметры:
 
-   | Setting | Value |
+   | Параметр | Значение |
    |---|---|
    | Name | `NexTalk Error Logs` |
    | Index | `nextalk-logs-*` |
@@ -45,11 +47,11 @@ UI path (after cluster is up): `http://<node-ip>/monitoring/kibana`
    | Check every | `1 minute` |
    | Notify | `Every time rule is active` |
 
-4. **Query** (KQL):
+4. **Запрос** (на языке KQL):
    ```
    log.level: "error" OR level: "Error"
    ```
-   Or as Elasticsearch JSON query:
+   Или в виде Elasticsearch JSON-запроса:
    ```json
    {
      "query": {
@@ -64,51 +66,51 @@ UI path (after cluster is up): `http://<node-ip>/monitoring/kibana`
    }
    ```
 
-5. **Threshold**: `IS ABOVE 0` in the last `1 minute`
+5. **Порог срабатывания:** `IS ABOVE 0` за последнюю `1 минуту`
 
-6. Under **Actions** → select the `SMTP Alert` connector:
-   - **To**: `<recipient@your-domain>`
-   - **Subject**: `[NexTalk] Error detected in logs`
+6. В секции **Actions** → выбери коннектор `SMTP Alert`:
+   - **To**: `<получатель@твой-домен>`
+   - **Subject**: `[NexTalk] Обнаружена ошибка в логах`
    - **Body**:
      ```
      {{context.title}}
 
-     Detected {{context.hits}} error log(s) in the last minute.
+     За последнюю минуту обнаружено {{context.hits}} ошибочных записей в логах.
 
-     Service: {{context.hits.hits.0._source.kubernetes.labels.app}}
-     Message: {{context.hits.hits.0._source.message}}
-     Time: {{context.hits.hits.0._source.@timestamp}}
+     Сервис: {{context.hits.hits.0._source.kubernetes.labels.app}}
+     Сообщение: {{context.hits.hits.0._source.message}}
+     Время: {{context.hits.hits.0._source.@timestamp}}
 
-     View in Kibana: {{context.link}}
+     Посмотреть в Kibana: {{context.link}}
      ```
 
-7. Click **Save**
+7. Нажми **Save**
 
 ---
 
-## Step 3 — Verify logs are indexed
+## Шаг 3 - Проверка поступления логов в индекс
 
-In **Discover**, set index pattern `nextalk-logs-*` and search:
+В разделе **Discover** укажи индексный шаблон `nextalk-logs-*` и выполни поиск:
 ```
 log.level: "error"
 ```
 
-To generate a test error log, call a non-existent endpoint or trigger a validation error in guild-service. Serilog will emit a structured JSON error log which Filebeat ships to Elasticsearch.
+Чтобы сгенерировать тестовую ошибку, дерни несуществующий эндпоинт или спровоцируй ошибку валидации в guild-service. Serilog запишет структурированную JSON-ошибку, а Filebeat отправит ее в Elasticsearch.
 
 ---
 
-## Serilog JSON log format (reference)
+## Формат JSON-логов Serilog (справочно)
 
-All NexTalk services emit compact JSON via `Serilog.Formatting.Compact`:
+Все сервисы NexTalk пишут компактный JSON через `Serilog.Formatting.Compact`:
 ```json
 {
-  "@t": "2024-01-15T10:30:00.000Z",
-  "@mt": "Cache miss for key {Key}. Stored: {Value}",
+  "@t": "2026-01-15T10:30:00.000Z",
+  "@mt": "Промах кэша по ключу {Key}. Сохранено: {Value}",
   "@l": "Information",
   "Key": "probe:shared",
-  "Value": "set by guild-service-7f9d8 at 2024-01-15T10:30:00Z",
+  "Value": "установлен guild-service-7f9d8 в 2026-01-15T10:30:00Z",
   "MachineName": "guild-service-7f9d8-xk2p1"
 }
 ```
 
-Error logs use `@l: "Error"`. Filebeat's `decode_json_fields` processor decodes the `message` field, so Elasticsearch receives all structured fields for filtering.
+Ошибочные логи содержат `@l: "Error"`. Процессор `decode_json_fields` в Filebeat разбирает поле `message`, поэтому Elasticsearch получает все структурированные поля для фильтрации.

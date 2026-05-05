@@ -11,7 +11,7 @@ env:
   IMAGE_PREFIX: ghcr.io/${{ github.repository_owner }}/nextalk
 
 jobs:
-  # ── Build & test (every branch, every PR) ────────────────────────────
+  # Build & test (every branch, every PR)
   build:
     runs-on: ubuntu-latest
     strategy:
@@ -41,7 +41,7 @@ jobs:
       - name: Build
         run: dotnet build ${{ matrix.project }} -c Release --no-restore
 
-  # ── Docker build & push (only after build passes, only on target branches) ──
+  # Docker build & push (only after build passes, only on target branches)
   docker:
     needs: build
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/sre/k8s-manifests')
