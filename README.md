@@ -140,6 +140,14 @@ kubectl wait --namespace nextalk --for=condition=ready pod \
 kubectl get pods -n nextalk
 ```
 
+Или через `make`:
+
+```bash
+make deploy   # kubectl apply -f k8s/
+make wait     # дождаться Ready
+make status   # kubectl get pods,svc -n nextalk
+```
+
 #### Запуск через Helm
 
 ```bash
@@ -149,6 +157,33 @@ helm install nextalk charts/nextalk/ \
   --set postgres.password=<пароль>
 
 helm status nextalk -n nextalk
+```
+
+Или через `make`:
+
+```bash
+make helm-install
+make helm-upgrade   # при обновлении values
+```
+
+#### Без внешнего registry (локально / k3s без интернета)
+
+```bash
+# Собрать образы и импортировать прямо в containerd k3s
+make import
+
+# Затем деплоить
+make deploy
+```
+
+#### Полезные команды Makefile
+
+```bash
+make                          # список всех команд
+make logs SERVICE=guild-service   # tail логов конкретного сервиса
+make probe                    # тест Redis cache hit/miss (авто-определяет NODE_IP)
+make probe NODE_IP=1.2.3.4    # то же, но с явным IP
+make teardown                 # удалить весь namespace (деструктивно!)
 ```
 
 После запуска (NODE_IP - IP вашей k3s-ноды):
