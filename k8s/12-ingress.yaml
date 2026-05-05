@@ -11,6 +11,7 @@
 #   /ui/v2/login                → zitadel:3000            (login UI)
 #   /                           → zitadel:8080            (OIDC / all other zitadel routes)
 #   /monitoring/grafana         → grafana:3000            (optional, for demo access)
+#   /monitoring/kibana          → kibana:5601             (optional, for demo access)
 #
 # NOTE: /internal/* is blocked — no backend configured, returns 404.
 apiVersion: networking.k8s.io/v1
@@ -82,6 +83,13 @@ spec:
                 name: grafana
                 port:
                   number: 3000
+          - path: /monitoring/kibana
+            pathType: Prefix
+            backend:
+              service:
+                name: kibana
+                port:
+                  number: 5601
           # --- Zitadel Login UI ---
           - path: /ui/v2/login
             pathType: Prefix

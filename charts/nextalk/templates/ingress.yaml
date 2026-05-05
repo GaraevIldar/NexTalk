@@ -64,6 +64,13 @@ spec:
                 name: grafana
                 port:
                   number: 3000
+          - path: /monitoring/kibana
+            pathType: Prefix
+            backend:
+              service:
+                name: kibana
+                port:
+                  number: 5601
           - path: /ui/v2/login
             pathType: Prefix
             backend:
