@@ -16,7 +16,6 @@ data:
       port_range_start: 50000
       port_range_end: 50200
       use_external_ip: false
-      node_ip: 0.0.0.0
 
     redis:
       address: redis:6379
@@ -44,6 +43,11 @@ spec:
       labels:
         app: livekit
     spec:
+      # LiveKit requires host networking per official docs:
+      # https://docs.livekit.io/transport/self-hosting/kubernetes/
+      # "LiveKit pods requires direct access to the network with host networking"
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
       containers:
         - name: livekit
           image: livekit/livekit-server:v1.11
@@ -54,14 +58,6 @@ spec:
             - containerPort: 7881
               name: rtc-tcp
               protocol: TCP
-            # UDP port range for WebRTC media — exposed via hostPort
-            # (k8s Services do not support port ranges for UDP)
-            - containerPort: 50000
-              hostPort: 50000
-              protocol: UDP
-            - containerPort: 50200
-              hostPort: 50200
-              protocol: UDP
           volumeMounts:
             - name: config
               mountPath: /etc/livekit.yaml
