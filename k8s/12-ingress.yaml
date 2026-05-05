@@ -24,9 +24,6 @@ metadata:
     # WebSocket support for /ws (SignalR)
     nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
     nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
-    # Pass correlation ID header downstream
-    nginx.ingress.kubernetes.io/configuration-snippet: |
-      proxy_set_header X-Request-Id $request_id;
 spec:
   ingressClassName: nginx
   rules:
