@@ -48,6 +48,9 @@ spec:
       # "LiveKit pods requires direct access to the network with host networking"
       hostNetwork: true
       dnsPolicy: ClusterFirstWithHostNet
+      # Disable k8s service-link env vars: k8s would inject LIVEKIT_PORT=tcp://...
+      # which LiveKit binary tries to parse as uint (port number) → crash on startup.
+      enableServiceLinks: false
       containers:
         - name: livekit
           image: livekit/livekit-server:v1.11
