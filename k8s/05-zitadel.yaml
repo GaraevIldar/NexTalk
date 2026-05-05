@@ -40,11 +40,8 @@ spec:
         # --- Zitadel API (OIDC / gRPC / REST) ---
         - name: api
           image: ghcr.io/zitadel/zitadel:v4.13.1
-          command:
-            - zitadel
+          args:
             - start-from-init
-            - --masterkey
-            - $(ZITADEL_MASTERKEY)
           ports:
             - containerPort: 8080
               name: api
