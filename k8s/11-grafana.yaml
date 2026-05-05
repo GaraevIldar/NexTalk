@@ -1,4 +1,23 @@
 ---
+# Dashboard provider — tells Grafana to load dashboards from /etc/grafana/provisioning/dashboards/
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-provider
+  namespace: nextalk
+data:
+  provider.yaml: |
+    apiVersion: 1
+    providers:
+      - name: nextalk
+        folder: NexTalk
+        type: file
+        disableDeletion: false
+        editable: true
+        options:
+          path: /etc/grafana/provisioning/dashboards
+
+---
 # Grafana datasource — provisioned automatically on first start.
 apiVersion: v1
 kind: ConfigMap
@@ -75,6 +94,12 @@ spec:
             - name: datasource
               mountPath: /etc/grafana/provisioning/datasources/datasource.yaml
               subPath: datasource.yaml
+            - name: dashboard-provider
+              mountPath: /etc/grafana/provisioning/dashboards/provider.yaml
+              subPath: provider.yaml
+            - name: dashboard-nextalk
+              mountPath: /etc/grafana/provisioning/dashboards/nextalk-dashboard.json
+              subPath: nextalk-dashboard.json
           readinessProbe:
             httpGet:
               path: /api/health
@@ -95,6 +120,12 @@ spec:
         - name: datasource
           configMap:
             name: grafana-datasource
+        - name: dashboard-provider
+          configMap:
+            name: grafana-dashboard-provider
+        - name: dashboard-nextalk
+          configMap:
+            name: grafana-dashboard-nextalk
 
 ---
 apiVersion: v1
