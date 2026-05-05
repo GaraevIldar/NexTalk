@@ -1,0 +1,19 @@
+# Non-sensitive application configuration.
+# Sensitive values are in 01-secrets.yaml.
+# IMPORTANT: Change ZITADEL_DOMAIN and ZITADEL_EXTERNALPORT to match your environment.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nextalk-config
+  namespace: nextalk
+data:
+  ASPNETCORE_ENVIRONMENT: Production
+
+  # --- Zitadel external address (must be reachable by browser) ---
+  # For local k3s: set to your node IP or hostname
+  ZITADEL_DOMAIN: "localhost"
+  ZITADEL_EXTERNALPORT: "80"
+  ZITADEL_PUBLIC_SCHEME: http
+  ZITADEL_EXTERNALSECURE: "false"
+  ZITADEL_ACCESS_LOG_STDOUT_ENABLED: "true"
+  LOGIN_CLIENT_PAT_EXPIRATION: "2099-12-31T23:59:59Z"
