@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: voice-service
-          image: nextalk/voice-service:latest
+          image: ghcr.io/garaevildar/nextalk/voice-service:latest
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 5003

@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: messaging-service
-          image: nextalk/messaging-service:latest
+          image: ghcr.io/garaevildar/nextalk/messaging-service:latest
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 5002

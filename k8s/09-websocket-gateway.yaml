@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: websocket-gateway
-          image: nextalk/websocket-gateway:latest
+          image: ghcr.io/garaevildar/nextalk/websocket-gateway:latest
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 5004

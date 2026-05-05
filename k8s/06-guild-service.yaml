@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
         - name: guild-service
-          image: nextalk/guild-service:latest
+          image: ghcr.io/garaevildar/nextalk/guild-service:latest
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 5001
