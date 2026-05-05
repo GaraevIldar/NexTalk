@@ -1,12 +1,6 @@
 import {createAsyncThunk, createSlice, PayloadAction} from '@reduxjs/toolkit'
 import {oidcService} from "../oidc/oidcService.ts";
-
-export interface User {
-    id: string
-    name?: string
-    email: string
-    nickname?: string
-}
+import {User} from "../../../shared/types";
 
 export interface Tokens {
     access_token: string
@@ -88,6 +82,7 @@ export const register = createAsyncThunk(
                 name,
                 nickname,
                 email,
+                createdAt: new Date(Date.now())
             }
 
             localStorage.setItem('mock_user', JSON.stringify(newUser))
@@ -124,9 +119,10 @@ export const initializeAuth = createAsyncThunk(
             return {
                 user: {
                     id: 'mock-id',
-                    username: 'mockuser',
+                    name: 'Mock User',
                     email: 'mock@example.com',
-                    displayName: 'Mock User',
+                    nickname: 'mockuser',
+                    createdAt: new Date(Date.now())
                 },
                 tokens: {
                     access_token: 'mock-token',
@@ -146,6 +142,7 @@ export const initializeAuth = createAsyncThunk(
                     name: userInfo.preferred_username,
                     email: userInfo.email,
                     nickname: userInfo.name,
+                    createdAt: new Date(Date.now()),
                 },
                 tokens: {
                     access_token: accessToken,
@@ -183,6 +180,7 @@ export const handleAuthCallback = createAsyncThunk(
                 name: userInfo.preferred_username,
                 email: userInfo.email,
                 nickname: userInfo.name,
+                createdAt: new Date(Date.now()),
             },
             tokens: {
                 access_token: tokens?.access_token,

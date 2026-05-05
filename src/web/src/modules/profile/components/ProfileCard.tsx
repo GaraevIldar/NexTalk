@@ -6,9 +6,8 @@ interface User {
     id: string
     name: string
     nickname: string
-    createdAt?: Date
-    serversCount?: number
-    status?: 'online' | 'offline'
+    createdAt: Date
+    serversCount: number
 }
 
 interface ProfileCardProps {
@@ -52,14 +51,12 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
                 </div>
                 <div className={styles.detailItem}>
                     <span className={styles.detailLabel}>Серверов</span>
-                    <span className={styles.detailValue}>{user.serversCount || 3}</span>
+                    <span className={styles.detailValue}>{user.serversCount}</span>
                 </div>
                 <div className={styles.detailItem}>
                     <span className={styles.detailLabel}>Статус</span>
-                    <span className={`${styles.detailValue} ${styles[user.status || 'online']}`}>
-                        {user.status === 'online' && 'Онлайн'}
-                        {user.status === 'offline' && 'Офлайн'}
-                        {!user.status && 'Онлайн'}
+                    <span className={`${styles.detailValue} ${styles['online']}`}>
+                        Онлайн
                     </span>
                 </div>
             </div>

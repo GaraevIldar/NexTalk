@@ -1,5 +1,5 @@
 import {createAsyncThunk, createSlice, PayloadAction} from '@reduxjs/toolkit'
-import {CreateGuildRequest, Guild} from "../../../shared/types/requestTypes.ts";
+import {CreateGuildRequest, Guild} from "../../../shared/types";
 import {getUserGuilds} from "../../../processes/guild/getUserGuilds.ts";
 import {createGuild} from "../../../processes/guild/createGuild.ts";
 

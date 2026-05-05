@@ -11,7 +11,7 @@ import styles from './ChannelChatPage.module.scss'
 import {useAppDispatch, useAppSelector} from "../../../store.ts";
 import {selectUser} from "../../auth/stores/authSlice.ts";
 import {fetchChannels} from "../stores/channelSlice.ts";
-import {fetchMessages, sendMessageLocal} from "../../chat/stores/chatSlice.ts";
+import {fetchMessages, sendMessage} from "../../chat/stores/chatSlice.ts";
 
 export const ChannelChatPage: React.FC = () => {
     const { serverId, channelId } = useParams()
@@ -35,11 +35,11 @@ export const ChannelChatPage: React.FC = () => {
     const handleSend = (text: string) => {
         if (!user || !channelId) return
 
-        dispatch(sendMessageLocal({
+        dispatch(sendMessage({
             id: Date.now().toString(),
             channelId,
             authorId: user.id,
-            authorName: user.username,
+            authorName: user.name,
             content: text,
             createdAt: new Date().toISOString()
         }))
@@ -62,38 +62,19 @@ export const ChannelChatPage: React.FC = () => {
         )
     }
 
-    if (!currentChannel && channels.length > 0) {
+    if (!currentChannel || channels.length === 0) {
         return (
             <div className={styles.layout}>
                 <ServerSidebar />
                 <ChannelSidebar />
                 <div className={styles.chatArea}>
-                    <div className={styles.header}>
-                        <div className={styles.title}>
-                            <Icon name="hash" size={20} />
-                            Канал не найден
-                        </div>
-                    </div>
                     <div className={styles.notFound}>
                         <Icon name="message" size={48} />
-                        <p>Канал не найден</p>
-                        <Button variant="secondary" onClick={() => window.history.back()}>
+                        <p>Выберите канал</p>
+                        <Button variant="secondary" onClick={() => navigate(-1)}>
                             Вернуться назад
                         </Button>
                     </div>
-                </div>
-                <MembersSidebar />
-            </div>
-        )
-    }
-
-    if (!currentChannel) {
-        return (
-            <div className={styles.layout}>
-                <ServerSidebar />
-                <ChannelSidebar />
-                <div className={styles.chatArea}>
-                    <div className={styles.loading}>Загрузка канала...</div>
                 </div>
                 <MembersSidebar />
             </div>

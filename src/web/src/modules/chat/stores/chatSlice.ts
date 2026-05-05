@@ -50,7 +50,7 @@ const chatSlice = createSlice({
     name: 'chat',
     initialState,
     reducers: {
-        sendMessageLocal: (state, action: PayloadAction<Message>) => {
+        sendMessage: (state, action: PayloadAction<Message>) => {
             const msg = action.payload
 
             if (!state.messages[msg.channelId]) {
@@ -75,5 +75,5 @@ const chatSlice = createSlice({
     }
 })
 
-export const { sendMessageLocal } = chatSlice.actions
+export const { sendMessage } = chatSlice.actions
 export default chatSlice.reducer

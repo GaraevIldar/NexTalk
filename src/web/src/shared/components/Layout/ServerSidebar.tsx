@@ -26,7 +26,7 @@ export const ServerSidebar: React.FC = () => {
         if (!server) return
 
         dispatch(setCurrentServer(server))
-        navigate(`/servers/${id}/channels/general`)
+        navigate(`/servers/${id}/channels`)
     }
 
     return (

@@ -31,7 +31,7 @@ export const ServersPage: React.FC = () => {
         const server = servers.find(s => s.id === serverId)
         if (server) {
             dispatch(setCurrentServer(server))
-            navigate(`/servers/${serverId}/channels/1`)
+            navigate(`/servers/${serverId}/channels`)
         }
     }
 

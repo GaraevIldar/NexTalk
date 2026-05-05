@@ -39,6 +39,7 @@ function App() {
 
                     <Route element={<ProtectedRoute />}>
                         <Route path="/servers" element={<ServersPage />} />
+                        <Route path="/servers/:serverId/channels" element={<ChannelChatPage />} />
                         <Route path="/servers/:serverId/channels/:channelId" element={<ChannelChatPage />} />
                         <Route path="/servers/:serverId/voice/:channelId" element={<VoiceChannelPage />} />
                         <Route path="/create-server" element={<CreateServerPage />} />
