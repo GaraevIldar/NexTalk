@@ -38,7 +38,7 @@ grafana:
 # Application services
 # -----------------------------------------------------------------------
 guildService:
-  replicas: 2                             # 2 replicas share Redis cache (SRE requirement)
+  replicas: 2                             # 2 replicas share Redis cache
   image: "nextalk/guild-service:latest"
   imagePullPolicy: IfNotPresent
 

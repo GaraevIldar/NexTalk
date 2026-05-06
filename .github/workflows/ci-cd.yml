@@ -41,7 +41,7 @@ jobs:
       - name: Build
         run: dotnet build ${{ matrix.project }} -c Release --no-restore
 
-  # Docker build & push (only after build passes, only on target branches)
+  # Docker build & push (only on target branches)
   docker:
     needs: build
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/sre/k8s-manifests')

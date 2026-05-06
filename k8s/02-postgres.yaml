@@ -105,4 +105,4 @@ spec:
   ports:
     - port: 5432
       targetPort: 5432
-  clusterIP: None   # headless – StatefulSet uses DNS pod-name.service
+  clusterIP: None   # headless - StatefulSet uses DNS pod-name.service

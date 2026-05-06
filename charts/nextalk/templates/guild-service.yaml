@@ -1,5 +1,4 @@
 ---
-# replicas: {{ .Values.guildService.replicas }} — SRE requirement: multiple instances sharing Redis cache.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
