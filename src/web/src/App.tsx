@@ -14,6 +14,7 @@ import {store, useAppSelector} from "./store.ts";
 import {Provider} from "react-redux";
 import React from "react";
 import {selectIsAuthenticated, selectIsLoading} from "./shared/slices/authSlice.ts";
+import {SignalRProvider} from "./SignalrContext.tsx";
 
 export const ProtectedRoute: React.FC = () => {
     const isAuth = useAppSelector(selectIsAuthenticated)
@@ -37,17 +38,19 @@ function App() {
                     <Route path="/auth" element={<AuthPage />} />
                     <Route path="/" element={<Navigate to="/servers" replace />} />
 
-                    <Route element={<ProtectedRoute />}>
-                        <Route path="/servers" element={<ServersPage />} />
-                        <Route path="/servers/:serverId/channels" element={<ChannelChatPage />} />
-                        <Route path="/servers/:serverId/channels/:channelId" element={<ChannelChatPage />} />
-                        <Route path="/servers/:serverId/voice/:channelId" element={<VoiceChannelPage />} />
-                        <Route path="/create-server" element={<CreateServerPage />} />
-                        <Route path="/servers/:serverId/create-channel" element={<CreateChannelPage />} />
-                        <Route path="/servers/:serverId/members" element={<MembersPage />} />
-                        <Route path="/servers/:serverId/invite" element={<InvitePage />} />
-                        <Route path="/profile" element={<ProfilePage />} />
-                    </Route>
+                    {/*<SignalRProvider>*/}
+                        <Route element={<ProtectedRoute />}>
+                            <Route path="/servers" element={<ServersPage />} />
+                            <Route path="/servers/:serverId/channels" element={<ChannelChatPage />} />
+                            <Route path="/servers/:serverId/channels/:channelId" element={<ChannelChatPage />} />
+                            <Route path="/servers/:serverId/voice/:channelId" element={<VoiceChannelPage />} />
+                            <Route path="/create-server" element={<CreateServerPage />} />
+                            <Route path="/servers/:serverId/create-channel" element={<CreateChannelPage />} />
+                            <Route path="/servers/:serverId/members" element={<MembersPage />} />
+                            <Route path="/servers/:serverId/invite" element={<InvitePage />} />
+                            <Route path="/profile" element={<ProfilePage />} />
+                        </Route>
+                    {/*</SignalRProvider>*/}
 
                     <Route path="/error" element={<ServerErrorPage />} />
                     <Route path="*" element={<NotFoundPage />} />

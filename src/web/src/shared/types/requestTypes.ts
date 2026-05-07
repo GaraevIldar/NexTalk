@@ -22,7 +22,7 @@ export interface Member {
     userId: string
     username: string
     name: string
-    role: 'owner' | 'admin' | 'moderator' | 'member'
+    role: 'owner' | 'admin' | 'member'
     avatar?: string
 }
 
@@ -55,7 +55,7 @@ export interface CreateInviteRequest {
 }
 
 export interface UpdateMemberRoleRequest {
-    role: 'admin' | 'moderator' | 'member'
+    role: 'admin' | 'member'
 }
 
 export interface Message {
