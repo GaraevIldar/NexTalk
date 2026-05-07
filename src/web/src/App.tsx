@@ -15,6 +15,7 @@ import {Provider} from "react-redux";
 import React from "react";
 import {selectIsAuthenticated, selectIsLoading} from "./shared/slices/authSlice.ts";
 import {SignalRProvider} from "./SignalrContext.tsx";
+import {OidcCallback} from "./modules/auth/oidc/OidcCallback.tsx";
 
 export const ProtectedRoute: React.FC = () => {
     const isAuth = useAppSelector(selectIsAuthenticated)
@@ -37,6 +38,7 @@ function App() {
                 <Routes>
                     <Route path="/auth" element={<AuthPage />} />
                     <Route path="/" element={<Navigate to="/servers" replace />} />
+                    <Route path="/callback" element={<OidcCallback />} />
 
                     {/*<SignalRProvider>*/}
                         <Route element={<ProtectedRoute />}>

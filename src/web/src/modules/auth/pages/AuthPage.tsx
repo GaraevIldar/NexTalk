@@ -34,7 +34,10 @@ export const AuthPage: React.FC = () => {
 
         try {
             await dispatch(login({ email, password })).unwrap()
-            navigate('/servers')
+
+            if (import.meta.env.VITE_USE_AUTH_MOCK === 'true') {
+                navigate('/servers')
+            }
         } catch (e) {
             console.error(e)
         }

@@ -28,7 +28,7 @@ class OidcService {
 
     // Конфигурация Zitadel
     private readonly config = {
-        authority: import.meta.env.VITE_OIDC_AUTHORITY || 'https://auth.nextalk.com',
+        authority: import.meta.env.VITE_OIDC_AUTHORITY,
         clientId: import.meta.env.VITE_OIDC_CLIENT_ID,
         redirectUri: import.meta.env.VITE_OIDC_REDIRECT_URI || `${window.location.origin}/callback`,
         postLogoutRedirectUri: `${window.location.origin}/auth`,
@@ -93,9 +93,8 @@ class OidcService {
         // Обмениваем code на токены
         const params = new URLSearchParams({
             client_id: this.config.clientId,
-            client_secret: '', // У Zitadel client_secret не обязателен для PKCE
             grant_type: 'authorization_code',
-            code: code,
+            code,
             redirect_uri: this.config.redirectUri,
             code_verifier: codeVerifier,
         })
